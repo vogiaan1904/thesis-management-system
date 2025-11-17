@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { applicationService, topicService } from '../../services/api';
 import { ThesisApplication, ThesisTopic, Instructor } from '../../types';
@@ -12,6 +12,9 @@ import {
   CheckCircle,
   XCircle,
   Users,
+  BookOpen,
+  Tag,
+  Building2,
 } from 'lucide-react';
 
 export default function InstructorDashboard() {
@@ -77,8 +80,8 @@ export default function InstructorDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardBody className="flex items-center space-x-4">
-            <div className="p-3 bg-purple-100 rounded-full">
-              <FileText className="h-6 w-6 text-purple-600" />
+            <div className="p-3 bg-[#7C2946]/10 rounded-full">
+              <FileText className="h-6 w-6 text-[#7C2946]" />
             </div>
             <div>
               <p className="text-sm text-gray-500">My Topics</p>
@@ -141,7 +144,7 @@ export default function InstructorDashboard() {
         <CardBody>
           {loading ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7C2946] mx-auto"></div>
             </div>
           ) : topics.length === 0 ? (
             <p className="text-gray-600 text-center py-8">
@@ -152,22 +155,81 @@ export default function InstructorDashboard() {
               {topics.map((topic) => (
                 <div
                   key={topic.id}
-                  className="border border-gray-200 rounded-lg p-4"
+                  className="border border-gray-200 rounded-lg p-4 hover:border-[#7C2946]/30 transition-colors"
                 >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold text-gray-900">
-                        {topic.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {topic.researchArea}
-                      </p>
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center space-x-2">
+                      <span className="px-2 py-1 bg-[#7C2946] text-white text-xs font-mono rounded">
+                        {topic.topicCode}
+                      </span>
+                      <span className="px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded">
+                        {topic.topicType}
+                      </span>
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full ${
+                          topic.status === 'Active'
+                            ? 'bg-green-100 text-green-800'
+                            : topic.status === 'Full'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {topic.status}
+                      </span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Users className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm">
+                      <span className="text-sm font-medium">
                         {topic.availableSlots}/{topic.totalSlots} slots
                       </span>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">
+                      {topic.title}
+                    </h3>
+                    {topic.titleEn && (
+                      <p className="text-sm text-gray-500 italic">
+                        {topic.titleEn}
+                      </p>
+                    )}
+                    <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                      {topic.description}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 mt-3">
+                    <div className="flex items-center space-x-1">
+                      <BookOpen className="h-4 w-4 text-gray-400" />
+                      <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">
+                        {topic.researchArea}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Tag className="h-4 w-4 text-gray-400" />
+                      <span className="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded">
+                        {topic.department}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Building2 className="h-4 w-4 text-gray-400" />
+                      <span className="text-xs text-gray-600">
+                        {topic.instructorDepartment}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <p className="text-xs font-medium text-gray-500 mb-1">
+                      ELIGIBLE PROGRAMS
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {topic.programTypes.map((type) => (
+                        <span
+                          key={type}
+                          className="px-2 py-0.5 bg-[#7C2946]/10 text-[#7C2946] text-xs rounded font-medium"
+                        >
+                          {type}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -191,7 +253,7 @@ export default function InstructorDashboard() {
         <CardBody>
           {loading ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7C2946] mx-auto"></div>
             </div>
           ) : pendingApplications.length === 0 ? (
             <p className="text-gray-600 text-center py-8">
@@ -243,7 +305,7 @@ export default function InstructorDashboard() {
         <CardBody>
           {loading ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7C2946] mx-auto"></div>
             </div>
           ) : applications.length === 0 ? (
             <p className="text-gray-600 text-center py-8">

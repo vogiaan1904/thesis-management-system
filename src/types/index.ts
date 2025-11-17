@@ -38,18 +38,42 @@ export type RegistrationStatus =
   | 'DEPARTMENT_REVOKED';
 
 // Topic Types
+export type TopicType = 'GD1-DCLV' | 'GD1-ĐACN' | 'GD1-ĐAMHKTMT' | 'LVTN' | 'ĐATN';
+export type TopicStatus = 'Active' | 'Inactive' | 'Full';
+export type ProgramType = 'CQ' | 'CN' | 'B2' | 'SN' | 'VLVH' | 'TX';
+
 export interface ThesisTopic {
   id: string;
+  // Topic Identification
+  topicCode: string; // Format: HK251-DCLV-010
+  topicType: TopicType;
   title: string;
-  description: string;
+  titleEn?: string; // English title (optional)
+
+  // Instructor Information
   instructorId: string;
   instructorName: string;
+  instructorTitle: string; // ThS., TS., PGS., etc.
+  instructorEmployeeId: string; // e.g., 003282
   instructorEmail: string;
-  requiredSkills: string[];
-  researchArea: string;
+  instructorDepartment: string;
+
+  // Topic Configuration
   totalSlots: number;
   availableSlots: number;
   pendingApplications: number;
+  status: TopicStatus;
+  programTypes: ProgramType[]; // Allowed programs
+  department: string; // e.g., Computer Science
+
+  // Topic Content
+  description: string;
+  phase1Requirements: string; // Preliminary research requirements
+  phase2Requirements: string; // Thesis implementation requirements
+  references: string[]; // Academic papers/resources
+  requiredSkills: string[]; // Prerequisites
+  researchArea: string;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -124,9 +148,17 @@ export interface ApplicationFormData {
 }
 
 export interface TopicFormData {
+  topicCode: string;
+  topicType: TopicType;
   title: string;
+  titleEn?: string;
   description: string;
+  phase1Requirements: string;
+  phase2Requirements: string;
+  references: string[];
   requiredSkills: string[];
+  programTypes: ProgramType[];
+  department: string;
   researchArea: string;
   totalSlots: number;
 }

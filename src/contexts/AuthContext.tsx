@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { User, Student, Instructor, Admin } from '../types';
+import { createContext, useContext, useState, ReactNode } from 'react';
+import { User } from '../types';
 import { mockStudents, mockInstructors, mockAdmins } from '../services/mockData';
 
 interface AuthContextType {
