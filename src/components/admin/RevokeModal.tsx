@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { applicationService } from '../../services/api';
 import { ThesisApplication } from '../../types';
 import Modal from '../common/Modal';

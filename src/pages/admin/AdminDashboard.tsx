@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { applicationService, verificationService } from '../../services/api';
 import { ThesisApplication, DashboardStats } from '../../types';
 import { Card, CardHeader, CardBody } from '../../components/common/Card';
