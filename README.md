@@ -139,3 +139,47 @@ src/
 - Audit trail logging
 - Mobile responsive improvements
 - Real-time updates with WebSockets
+
+
+### Model
+
+Topic Model Structure
+Core Fields:
+
+Topic Identification
+
+Topic Code: Format like HK251-DCLV-010 (Semester-Type-Number)
+Topic Type: GD1-DCLV, GD1-ĐACN, GD1-ĐAMHKTMT, LVTN, ĐATN
+Title (Vietnamese and possibly English)
+Created Date/Time
+Last Updated Date/Time
+
+
+Instructor Information
+
+Name with Title (ThS., TS., PGS., etc.)
+Employee ID (e.g., 003282)
+Email address
+Department/Faculty
+
+
+Topic Configuration
+
+Maximum Students: Number (e.g., 3)
+Current Students: Number enrolled
+Status: Active/Inactive/Full
+Program Types: Array of allowed programs (CQ/CN/B2/SN/VLVH/TX)
+Department: Computer Science, Software Engineering, etc.
+
+
+Topic Content
+
+Description: Detailed text about the research problem
+Requirements:
+
+Phase 1 Requirements (for preliminary research)
+Phase 2 Requirements (for thesis implementation)
+
+
+References: Array of academic papers/resources
+Prerequisites: Skills or courses required
