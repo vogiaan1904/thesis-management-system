@@ -1,0 +1,134 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum UserRole {
+  STUDENT
+  INSTRUCTOR
+  DEPARTMENT
+  ADMIN
+}
+
+enum TopicType {
+  DCLV
+  DACN
+  DAMHKTMT
+  LVTN
+  DATN
+}
+
+enum TopicStatus {
+  ACTIVE
+  INACTIVE
+  FULL
+}
+
+enum RegistrationStatus {
+  PENDING_INSTRUCTOR_REVIEW
+  INSTRUCTOR_ACCEPTED
+  INSTRUCTOR_DENIED
+  VERIFIED
+  INVALID_CREDITS
+  NOT_ENROLLED_EDUSOFT
+  DEPARTMENT_REVOKED
+}
+
+// Models
+model User {
+  id         String   @id @default(uuid())
+  userId     String   @unique // Student ID or Employee ID
+  fullName   String
+  email      String   @unique
+  password   String
+  role       UserRole @default(STUDENT)
+  department String?
+  major      String?
+  program    String? // CQ/CN/B2/SN/VLVH/TX
+  isActive   Boolean  @default(true)
+
+  // Relations
+  registrations Registration[]
+  topics        Topic[]        @relation("InstructorTopics")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Topic {
+  id                 String      @id @default(uuid())
+  topicCode          String      @unique // Format: HK251-DCLV-010
+  semester           String // HK251
+  topicType          TopicType
+  titleVn            String      @db.Text
+  titleEn            String?     @db.Text
+  description        String      @db.Text
+  phase1Requirements String?     @db.Text
+  phase2Requirements String?     @db.Text
+  maxStudents        Int         @default(1)
+  currentStudents    Int         @default(0)
+  programTypes       String[] // ['CQ', 'CN', 'B2']
+  prerequisites      String?     @db.Text
+  references         Json? // Array of { text: string; url?: string }
+  status             TopicStatus @default(ACTIVE)
+  department         String
+
+  // Relations
+  instructorId  String
+  instructor    User           @relation("InstructorTopics", fields: [instructorId], references: [id])
+  registrations Registration[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("topics")
+}
+
+model Registration {
+  id                String             @id @default(uuid())
+  status            RegistrationStatus @default(PENDING_INSTRUCTOR_REVIEW)
+  creditsClaimed    Int?
+  creditsVerified   Int?
+  transcriptUrl     String? // Uploaded file path
+  motivationLetter  String?            @db.Text
+  instructorComment String?            @db.Text
+  departmentComment String?            @db.Text
+  reviewedBy        String? // Instructor ID who reviewed
+  reviewedAt        DateTime?
+  verifiedBy        String? // Department staff ID
+  verifiedAt        DateTime?
+
+  // Relations
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id])
+  topicId   String
+  topic     Topic  @relation(fields: [topicId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, topicId])
+  @@map("registrations")
+}
+
+model VerificationBatch {
+  id         String  @id @default(uuid())
+  semester   String
+  fileName   String
+  uploadedBy String
+  results    Json // { total: number; verified: number; invalid: number; notEnrolled: number }
+  errors     String? @db.Text
+
+  createdAt DateTime @default(now())
+
+  @@map("verification_batches")
+}
