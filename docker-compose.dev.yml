@@ -1,0 +1,52 @@
+version: '3.8'
+
+networks:
+  tms-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+
+services:
+  # ============================================
+  # INFRASTRUCTURE SERVICES
+  # ============================================
+  
+  # Redis (Waitroom)
+  redis:
+    image: redis:7-alpine
+    container_name: tms-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - tms-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # PostgreSQL - Inventory
+  postgres:
+    image: postgres:15-alpine
+    container_name: tms-postgres
+    environment:
+      POSTGRES_DB: tms
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - tms-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d tms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
