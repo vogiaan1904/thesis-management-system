@@ -31,8 +31,8 @@ export default function InstructorDashboard() {
   const fetchData = async () => {
     try {
       const [appsData, topicsData] = await Promise.all([
-        applicationService.getByInstructor(instructor.id),
-        topicService.getByInstructor(instructor.id),
+        applicationService.getPendingReviews(),
+        topicService.getByInstructor(),
       ]);
       setApplications(appsData);
       setTopics(topicsData);
@@ -45,7 +45,7 @@ export default function InstructorDashboard() {
 
   useEffect(() => {
     fetchData();
-  }, [instructor.id]);
+  }, []);
 
   const pendingApplications = applications.filter(
     (a) => a.status === 'PENDING_INSTRUCTOR_REVIEW'

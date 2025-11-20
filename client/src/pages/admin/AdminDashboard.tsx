@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { applicationService, verificationService } from '../../services/api';
+import { applicationService, verificationService, reportService } from '../../services/api';
 import { ThesisApplication, DashboardStats } from '../../types';
 import { Card, CardHeader, CardBody } from '../../components/common/Card';
 import StatusBadge from '../../components/common/StatusBadge';
@@ -35,7 +35,7 @@ export default function AdminDashboard() {
     try {
       const [appsData, statsData] = await Promise.all([
         applicationService.getAll(),
-        verificationService.getStatistics(),
+        reportService.getSummary(),
       ]);
       setApplications(appsData);
       setStats(statsData);
@@ -53,8 +53,15 @@ export default function AdminDashboard() {
   const handleVerify = async () => {
     setVerifying(true);
     try {
-      const result = await verificationService.verifyApplications();
-      setVerificationResult(result);
+      // Get the latest verification batch
+      const latestBatch = await verificationService.getLatest();
+      if (latestBatch) {
+        setVerificationResult({
+          verified: latestBatch.verifiedCount || 0,
+          invalidCredits: latestBatch.invalidCreditsCount || 0,
+          notEnrolled: latestBatch.notEnrolledCount || 0,
+        });
+      }
       await fetchData();
     } catch (error) {
       console.error('Verification failed:', error);

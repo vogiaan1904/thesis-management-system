@@ -17,7 +17,7 @@ export default function StudentDashboard() {
   useEffect(() => {
     const fetchApplications = async () => {
       try {
-        const data = await applicationService.getByStudent(student.studentId);
+        const data = await applicationService.getByStudent();
         setApplications(data);
       } catch (error) {
         console.error('Failed to fetch applications:', error);
@@ -27,7 +27,7 @@ export default function StudentDashboard() {
     };
 
     fetchApplications();
-  }, [student.studentId]);
+  }, []);
 
   const pendingCount = applications.filter(
     (a) => a.status === 'PENDING_INSTRUCTOR_REVIEW'
