@@ -42,11 +42,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (userId: string, password: string): Promise<boolean> => {
     try {
+      console.log('AuthContext.login called');
       const data = await authService.login(userId, password);
+      console.log('authService.login returned data:', data);
+      console.log('Setting user:', data.user);
       setUser(data.user);
+      console.log('User set successfully');
       return true;
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error('Login failed with error:', error);
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
       return false;
     }
   };
