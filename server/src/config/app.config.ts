@@ -36,4 +36,7 @@ export default registerAs('app', () => ({
   mailUser: process.env.MAIL_USER || '',
   mailPassword: process.env.MAIL_PASSWORD || '',
   mailFrom: process.env.MAIL_FROM || 'Thesis System <noreply@university.edu.vn>',
+
+  // Bcrypt
+  bcryptSaltRounds: parseInt(process.env.BCRYPT_SALT_ROUNDS, 10) || 10,
 }));

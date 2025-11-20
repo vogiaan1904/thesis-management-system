@@ -1,14 +1,22 @@
 // prisma/seed.ts
 import { PrismaClient, UserRole, TopicType, TopicStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import * as dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const prisma = new PrismaClient();
 
+// Get salt rounds from environment or use default
+const SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS || '10', 10);
+
 async function main() {
   console.log('Starting database seed...');
+  console.log(`Using bcrypt salt rounds: ${SALT_ROUNDS}`);
 
   // Create admin user
-  const adminPassword = await bcrypt.hash('admin123', 10);
+  const adminPassword = await bcrypt.hash('admin123', SALT_ROUNDS);
   const admin = await prisma.user.upsert({
     where: { email: 'admin@university.edu.vn' },
     update: {},
@@ -24,7 +32,7 @@ async function main() {
   console.log('Created admin user:', admin.email);
 
   // Create department user
-  const deptPassword = await bcrypt.hash('dept123', 10);
+  const deptPassword = await bcrypt.hash('dept123', SALT_ROUNDS);
   const dept = await prisma.user.upsert({
     where: { email: 'department@university.edu.vn' },
     update: {},
@@ -40,7 +48,7 @@ async function main() {
   console.log('Created department user:', dept.email);
 
   // Create instructor users
-  const instructor1Password = await bcrypt.hash('instructor123', 10);
+  const instructor1Password = await bcrypt.hash('instructor123', SALT_ROUNDS);
   const instructor1 = await prisma.user.upsert({
     where: { email: 'instructor1@university.edu.vn' },
     update: {},
@@ -55,7 +63,7 @@ async function main() {
   });
   console.log('Created instructor 1:', instructor1.email);
 
-  const instructor2Password = await bcrypt.hash('instructor123', 10);
+  const instructor2Password = await bcrypt.hash('instructor123', SALT_ROUNDS);
   const instructor2 = await prisma.user.upsert({
     where: { email: 'instructor2@university.edu.vn' },
     update: {},
@@ -71,7 +79,7 @@ async function main() {
   console.log('Created instructor 2:', instructor2.email);
 
   // Create student users
-  const student1Password = await bcrypt.hash('student123', 10);
+  const student1Password = await bcrypt.hash('student123', SALT_ROUNDS);
   const student1 = await prisma.user.upsert({
     where: { email: 'student1@student.hcmiu.edu.vn' },
     update: {},
@@ -88,7 +96,7 @@ async function main() {
   });
   console.log('Created student 1:', student1.email);
 
-  const student2Password = await bcrypt.hash('student123', 10);
+  const student2Password = await bcrypt.hash('student123', SALT_ROUNDS);
   const student2 = await prisma.user.upsert({
     where: { email: 'student2@student.hcmiu.edu.vn' },
     update: {},
