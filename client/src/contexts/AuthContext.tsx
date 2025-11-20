@@ -5,7 +5,7 @@ import { authService } from '../services/api';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (userId: string, password: string) => Promise<boolean>;
   logout: () => void;
   switchUser: (userId: string) => void;
 }
@@ -40,10 +40,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUser();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (userId: string, password: string): Promise<boolean> => {
     try {
-      const response = await authService.login(email, password);
-      setUser(response.user);
+      const data = await authService.login(userId, password);
+      setUser(data.user);
       return true;
     } catch (error) {
       console.error('Login failed:', error);
