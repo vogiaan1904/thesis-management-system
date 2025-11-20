@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { verificationService } from '../../services/api';
-import { EDUSoftStudent } from '../../types';
-import { mockEDUSoftData } from '../../services/mockData';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import { Upload, FileSpreadsheet, AlertCircle, CheckCircle } from 'lucide-react';
@@ -19,14 +17,13 @@ export default function ExcelUploadModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [previewData, setPreviewData] = useState<EDUSoftStudent[] | null>(null);
+  const [semester, setSemester] = useState('HK251');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
-      // For demo, we'll use mock data as preview
-      setPreviewData(mockEDUSoftData);
+      setError('');
     }
   };
 
@@ -36,19 +33,22 @@ export default function ExcelUploadModal({
       return;
     }
 
+    if (!semester) {
+      setError('Please enter a semester');
+      return;
+    }
+
     setError('');
     setLoading(true);
 
     try {
-      // In production, this would parse the Excel file
-      // For demo, we'll use mock data
-      await verificationService.uploadEDUSoftData(mockEDUSoftData);
+      await verificationService.uploadFile(file, semester);
       setSuccess(true);
       setTimeout(() => {
         onClose();
       }, 2000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed');
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err.message || 'Upload failed');
     } finally {
       setLoading(false);
     }
@@ -65,8 +65,7 @@ export default function ExcelUploadModal({
             EDUSoft Data Uploaded Successfully
           </h3>
           <p className="text-gray-600">
-            {previewData?.length || 0} student records have been loaded. You can
-            now run the verification process.
+            The verification process has been started. You can check the results in the verification history.
           </p>
         </div>
       </Modal>
@@ -88,7 +87,24 @@ export default function ExcelUploadModal({
           </div>
         )}
 
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors">
+        <div>
+          <label
+            htmlFor="semester"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Semester
+          </label>
+          <input
+            type="text"
+            id="semester"
+            value={semester}
+            onChange={(e) => setSemester(e.target.value)}
+            placeholder="e.g., HK251"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#7C2946] focus:border-transparent"
+          />
+        </div>
+
+        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#7C2946]/30 transition-colors">
           <FileSpreadsheet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <input
             type="file"
@@ -99,7 +115,7 @@ export default function ExcelUploadModal({
           />
           <label
             htmlFor="excel-upload"
-            className="cursor-pointer text-blue-600 hover:underline text-lg font-medium"
+            className="cursor-pointer text-[#7C2946] hover:underline text-lg font-medium"
           >
             Click to select Excel file
           </label>
@@ -107,81 +123,16 @@ export default function ExcelUploadModal({
             Supports .xlsx, .xls, or .csv files
           </p>
           {file && (
-            <div className="mt-4 p-3 bg-blue-50 rounded-md">
-              <p className="text-sm text-blue-700 font-medium">
+            <div className="mt-4 p-3 bg-[#7C2946]/10 rounded-md">
+              <p className="text-sm text-[#7C2946] font-medium">
                 Selected: {file.name}
               </p>
-              <p className="text-xs text-blue-600">
+              <p className="text-xs text-gray-600">
                 Size: {(file.size / 1024).toFixed(2)} KB
               </p>
             </div>
           )}
         </div>
-
-        {previewData && (
-          <div>
-            <h4 className="font-semibold text-gray-900 mb-3">
-              Data Preview ({previewData.length} records)
-            </h4>
-            <div className="overflow-x-auto border border-gray-200 rounded-lg">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                      Student ID
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                      Name
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                      Major
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                      Enrolled
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                      Credits
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {previewData.slice(0, 5).map((student) => (
-                    <tr key={student.studentId}>
-                      <td className="px-4 py-2 text-sm text-gray-900">
-                        {student.studentId}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-gray-900">
-                        {student.name}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-gray-900">
-                        {student.major}
-                      </td>
-                      <td className="px-4 py-2 text-sm">
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-xs ${
-                            student.enrolledInThesis
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {student.enrolledInThesis ? 'Yes' : 'No'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2 text-sm text-gray-900">
-                        {student.actualCredits}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {previewData.length > 5 && (
-              <p className="text-xs text-gray-500 mt-2">
-                Showing 5 of {previewData.length} records
-              </p>
-            )}
-          </div>
-        )}
 
         <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
           <h4 className="font-medium text-yellow-800 mb-2">Important Notes</h4>
@@ -191,7 +142,7 @@ export default function ExcelUploadModal({
             </li>
             <li>- Ensure the file contains the latest data from EDUSoft</li>
             <li>
-              - A backup of current data will be created before processing
+              - The verification process will run automatically after upload
             </li>
           </ul>
         </div>

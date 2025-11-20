@@ -20,28 +20,40 @@ export default function Login() {
     setError('');
     setLoading(true);
 
-    const success = await login(email, password);
-    if (success) {
-      // Redirect based on role
-      const allUsers = [...mockStudents, ...mockInstructors, ...mockAdmins];
-      const user = allUsers.find((u) => u.email === email);
-      if (user) {
-        switch (user.role) {
-          case 'student':
-            navigate('/student');
-            break;
-          case 'instructor':
-            navigate('/instructor');
-            break;
-          case 'admin':
-            navigate('/admin');
-            break;
+    try {
+      const success = await login(email, password);
+      if (success) {
+        // Get user from localStorage (set by authService)
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          // Redirect based on role
+          switch (user.role) {
+            case 'STUDENT':
+            case 'student':
+              navigate('/student');
+              break;
+            case 'INSTRUCTOR':
+            case 'instructor':
+              navigate('/instructor');
+              break;
+            case 'ADMIN':
+            case 'DEPARTMENT':
+            case 'admin':
+              navigate('/admin');
+              break;
+            default:
+              navigate('/');
+          }
         }
+      } else {
+        setError('Invalid email or password');
       }
-    } else {
-      setError('Invalid email or password');
+    } catch (err) {
+      setError('Login failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleQuickLogin = (userId: string) => {
