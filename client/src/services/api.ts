@@ -1,209 +1,253 @@
+import axios, { AxiosInstance, AxiosError } from 'axios';
 import {
   ThesisTopic,
   ThesisApplication,
   RegistrationStatus,
-  EDUSoftStudent,
   ApplicationFormData,
+  TopicFormData,
+  DashboardStats,
 } from '../types';
-import {
-  mockTopics,
-  mockApplications,
-  mockEDUSoftData,
-} from './mockData';
 
-// Simulated API delay
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+// API Configuration
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
-// In-memory state for demo purposes
-let topics = [...mockTopics];
-let applications = [...mockApplications];
-let edusoftData = [...mockEDUSoftData];
-
-// Topic APIs
-export const topicService = {
-  async getAll(): Promise<ThesisTopic[]> {
-    await delay(300);
-    return topics;
+// Create axios instance
+const apiClient: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
   },
+  withCredentials: true,
+});
 
-  async getById(id: string): Promise<ThesisTopic | undefined> {
-    await delay(200);
-    return topics.find((t) => t.id === id);
-  },
-
-  async getByInstructor(instructorId: string): Promise<ThesisTopic[]> {
-    await delay(300);
-    return topics.filter((t) => t.instructorId === instructorId);
-  },
-
-  async updateSlots(topicId: string, delta: number): Promise<void> {
-    await delay(200);
-    const topic = topics.find((t) => t.id === topicId);
-    if (topic) {
-      topic.availableSlots = Math.max(0, topic.availableSlots + delta);
-      topic.updatedAt = new Date();
+// Request interceptor to add auth token
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor to handle errors
+apiClient.interceptors.response.use(
+  (response) => {
+    // Extract data from the response
+    return response.data?.data !== undefined ? response.data.data : response.data;
+  },
+  (error: AxiosError) => {
+    if (error.response?.status === 401) {
+      // Unauthorized - clear token and redirect to login
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user');
+      window.location.href = '/';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Auth APIs
+export const authService = {
+  async login(email: string, password: string): Promise<{ user: any; token: string }> {
+    const response = await apiClient.post('/auth/login', { email, password });
+    if (response.token) {
+      localStorage.setItem('auth_token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+    }
+    return response;
+  },
+
+  async register(data: {
+    userId: string;
+    email: string;
+    password: string;
+    name: string;
+    role: string;
+    department?: string;
+    major?: string;
+  }): Promise<{ user: any; token: string }> {
+    const response = await apiClient.post('/auth/register', data);
+    if (response.token) {
+      localStorage.setItem('auth_token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+    }
+    return response;
+  },
+
+  async getProfile(): Promise<any> {
+    return await apiClient.get('/auth/profile');
+  },
+
+  logout() {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user');
   },
 };
 
-// Application APIs
-export const applicationService = {
-  async getAll(): Promise<ThesisApplication[]> {
-    await delay(300);
-    return applications;
-  },
-
-  async getByStudent(studentId: string): Promise<ThesisApplication[]> {
-    await delay(300);
-    return applications.filter((a) => a.studentId === studentId);
-  },
-
-  async getByInstructor(instructorId: string): Promise<ThesisApplication[]> {
-    await delay(300);
-    return applications.filter((a) => a.instructorId === instructorId);
-  },
-
-  async getByStatus(status: RegistrationStatus): Promise<ThesisApplication[]> {
-    await delay(300);
-    return applications.filter((a) => a.status === status);
-  },
-
-  async create(
-    data: ApplicationFormData,
-    studentInfo: {
-      studentId: string;
-      studentName: string;
-      studentEmail: string;
+// Topic APIs
+export const topicService = {
+  async getAll(filters?: {
+    topicType?: string;
+    programType?: string;
+    department?: string;
+    researchArea?: string;
+    search?: string;
+    status?: string;
+  }): Promise<ThesisTopic[]> {
+    const params = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) params.append(key, value);
+      });
     }
-  ): Promise<ThesisApplication> {
-    await delay(500);
-    const topic = topics.find((t) => t.id === data.topicId);
-    if (!topic) throw new Error('Topic not found');
+    return await apiClient.get(`/topics?${params.toString()}`);
+  },
 
-    const newApplication: ThesisApplication = {
-      id: `app-${Date.now()}`,
-      studentId: studentInfo.studentId,
-      studentName: studentInfo.studentName,
-      studentEmail: studentInfo.studentEmail,
-      topicId: data.topicId,
-      topicTitle: topic.title,
-      instructorId: topic.instructorId,
-      instructorName: topic.instructorName,
-      status: 'PENDING_INSTRUCTOR_REVIEW',
-      selfReportedCredits: data.selfReportedCredits,
-      motivationLetter: data.motivationLetter,
-      documents: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+  async getById(id: string): Promise<ThesisTopic> {
+    return await apiClient.get(`/topics/${id}`);
+  },
 
-    applications.push(newApplication);
-    topic.pendingApplications += 1;
-    return newApplication;
+  async getByInstructor(): Promise<ThesisTopic[]> {
+    return await apiClient.get('/topics/my-topics');
+  },
+
+  async create(data: TopicFormData): Promise<ThesisTopic> {
+    return await apiClient.post('/topics', data);
+  },
+
+  async update(id: string, data: Partial<TopicFormData>): Promise<ThesisTopic> {
+    return await apiClient.patch(`/topics/${id}`, data);
+  },
+
+  async delete(id: string): Promise<void> {
+    return await apiClient.delete(`/topics/${id}`);
+  },
+};
+
+// Application/Registration APIs
+export const applicationService = {
+  async getAll(filters?: { status?: string; topicId?: string }): Promise<ThesisApplication[]> {
+    const params = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) params.append(key, value);
+      });
+    }
+    return await apiClient.get(`/registrations?${params.toString()}`);
+  },
+
+  async getByStudent(): Promise<ThesisApplication[]> {
+    return await apiClient.get('/registrations/my-applications');
+  },
+
+  async getPendingReviews(): Promise<ThesisApplication[]> {
+    return await apiClient.get('/registrations/pending-reviews');
+  },
+
+  async getMyStudents(): Promise<ThesisApplication[]> {
+    return await apiClient.get('/registrations/my-students');
+  },
+
+  async create(data: ApplicationFormData): Promise<ThesisApplication> {
+    const formData = new FormData();
+    formData.append('topicId', data.topicId);
+    formData.append('selfReportedCredits', data.selfReportedCredits.toString());
+    formData.append('motivationLetter', data.motivationLetter);
+
+    // Handle file uploads
+    data.documents?.forEach((file, index) => {
+      formData.append(`documents`, file);
+    });
+
+    return await apiClient.post('/registrations/apply', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
   },
 
   async updateStatus(
-    applicationId: string,
+    registrationId: string,
     status: RegistrationStatus,
     notes?: string
   ): Promise<ThesisApplication> {
-    await delay(400);
-    const app = applications.find((a) => a.id === applicationId);
-    if (!app) throw new Error('Application not found');
+    return await apiClient.post('/registrations/review', {
+      registrationId,
+      status,
+      notes,
+    });
+  },
 
-    const oldStatus = app.status;
-    app.status = status;
-    app.updatedAt = new Date();
+  async update(id: string, data: Partial<ApplicationFormData>): Promise<ThesisApplication> {
+    return await apiClient.patch(`/registrations/${id}`, data);
+  },
 
-    if (notes) {
-      if (status.startsWith('INSTRUCTOR')) {
-        app.instructorNotes = notes;
-      } else {
-        app.departmentNotes = notes;
-      }
-    }
-
-    // Update topic slots based on status change
-    const topic = topics.find((t) => t.id === app.topicId);
-    if (topic) {
-      if (oldStatus === 'PENDING_INSTRUCTOR_REVIEW') {
-        topic.pendingApplications = Math.max(0, topic.pendingApplications - 1);
-      }
-
-      if (status === 'INSTRUCTOR_ACCEPTED' && oldStatus !== 'INSTRUCTOR_ACCEPTED') {
-        topic.availableSlots = Math.max(0, topic.availableSlots - 1);
-      } else if (oldStatus === 'INSTRUCTOR_ACCEPTED' && status !== 'INSTRUCTOR_ACCEPTED') {
-        topic.availableSlots = Math.min(topic.totalSlots, topic.availableSlots + 1);
-      }
-    }
-
-    return app;
+  async withdraw(id: string): Promise<void> {
+    return await apiClient.delete(`/registrations/${id}`);
   },
 };
 
 // Verification APIs
 export const verificationService = {
-  async uploadEDUSoftData(data: EDUSoftStudent[]): Promise<void> {
-    await delay(500);
-    edusoftData = data;
+  async uploadFile(file: File, semester: string): Promise<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('semester', semester);
+
+    return await apiClient.post('/verification/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
   },
 
-  async verifyApplications(): Promise<{
-    verified: number;
-    invalidCredits: number;
-    notEnrolled: number;
-  }> {
-    await delay(1000);
-    let verified = 0;
-    let invalidCredits = 0;
-    let notEnrolled = 0;
-
-    for (const app of applications) {
-      if (app.status === 'INSTRUCTOR_ACCEPTED') {
-        const edusoftRecord = edusoftData.find(
-          (e) => e.studentId === app.studentId
-        );
-
-        if (!edusoftRecord || !edusoftRecord.enrolledInThesis) {
-          app.status = 'NOT_ENROLLED_EDUSOFT';
-          notEnrolled++;
-        } else if (edusoftRecord.actualCredits < 100) {
-          // Assuming 100 credits required
-          app.status = 'INVALID_CREDITS';
-          app.actualCredits = edusoftRecord.actualCredits;
-          invalidCredits++;
-        } else {
-          app.status = 'VERIFIED';
-          app.actualCredits = edusoftRecord.actualCredits;
-          verified++;
-        }
-        app.updatedAt = new Date();
-      }
-    }
-
-    return { verified, invalidCredits, notEnrolled };
+  async getHistory(): Promise<any[]> {
+    return await apiClient.get('/verification/history');
   },
 
-  async getStatistics() {
-    await delay(300);
-    const stats = {
-      totalTopics: topics.length,
-      totalApplications: applications.length,
-      pendingReviews: applications.filter(
-        (a) => a.status === 'PENDING_INSTRUCTOR_REVIEW'
-      ).length,
-      acceptedApplications: applications.filter(
-        (a) => a.status === 'INSTRUCTOR_ACCEPTED'
-      ).length,
-      verifiedRegistrations: applications.filter((a) => a.status === 'VERIFIED')
-        .length,
-      invalidRegistrations: applications.filter(
-        (a) =>
-          a.status === 'INVALID_CREDITS' ||
-          a.status === 'NOT_ENROLLED_EDUSOFT' ||
-          a.status === 'DEPARTMENT_REVOKED'
-      ).length,
-    };
-    return stats;
+  async getLatest(): Promise<any> {
+    return await apiClient.get('/verification/latest');
+  },
+
+  async getBatch(batchId: string): Promise<any> {
+    return await apiClient.get(`/verification/${batchId}`);
+  },
+
+  async reprocessBatch(batchId: string): Promise<any> {
+    return await apiClient.post(`/verification/process/${batchId}`);
   },
 };
+
+// Reports APIs
+export const reportService = {
+  async getSummary(): Promise<DashboardStats> {
+    return await apiClient.get('/reports/summary');
+  },
+
+  async getInstructorLoad(): Promise<any[]> {
+    return await apiClient.get('/reports/instructor-load');
+  },
+
+  async getDepartmentStats(department?: string): Promise<any> {
+    const params = department ? `?department=${department}` : '';
+    return await apiClient.get(`/reports/department-stats${params}`);
+  },
+
+  async exportToExcel(type: 'topics' | 'registrations' | 'instructor-load'): Promise<Blob> {
+    const response = await axios.get(`${API_BASE_URL}/reports/export?type=${type}`, {
+      responseType: 'blob',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+      },
+    });
+    return response.data;
+  },
+};
+
+// Export the API client for custom requests
+export default apiClient;
