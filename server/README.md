@@ -4,7 +4,7 @@ NestJS backend for a university thesis registration system where students apply 
 
 ## Technology Stack
 
-- **Framework**: NestJS v11
+- **Framework**: NestJS v10.4 (latest stable v10)
 - **Language**: TypeScript
 - **Database**: PostgreSQL with Prisma ORM
 - **Authentication**: JWT with Passport
@@ -24,7 +24,7 @@ NestJS backend for a university thesis registration system where students apply 
 
 1. **Install dependencies**:
 ```bash
-npm install --legacy-peer-deps
+npm install
 ```
 
 2. **Set up environment variables**:
