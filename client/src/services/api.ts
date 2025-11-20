@@ -11,6 +11,30 @@ import {
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
+// Response Types
+interface AuthResponse {
+  access_token: string;
+  user: {
+    id: string;
+    userId: string;
+    fullName: string;
+    email: string;
+    role: string;
+    department?: string;
+    major?: string;
+    program?: string;
+  };
+}
+
+interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    lastPage: number;
+  };
+}
+
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -37,8 +61,7 @@ apiClient.interceptors.request.use(
 // Response interceptor to handle errors
 apiClient.interceptors.response.use(
   (response) => {
-    // Extract data from the response
-    return response.data?.data !== undefined ? response.data.data : response.data;
+    return response;
   },
   (error: AxiosError) => {
     if (error.response?.status === 401) {
@@ -53,34 +76,34 @@ apiClient.interceptors.response.use(
 
 // Auth APIs
 export const authService = {
-  async login(email: string, password: string): Promise<{ user: any; token: string }> {
-    const response = await apiClient.post('/auth/login', { email, password });
-    if (response.token) {
-      localStorage.setItem('auth_token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
+  async login(userId: string, password: string): Promise<AuthResponse> {
+    const response = await apiClient.post<AuthResponse>('/auth/login', { userId, password });
+    const data = response.data;
+
+    if (data.access_token) {
+      localStorage.setItem('auth_token', data.access_token);
+      localStorage.setItem('user', JSON.stringify(data.user));
     }
-    return response;
+
+    return data;
   },
 
   async register(data: {
     userId: string;
     email: string;
     password: string;
-    name: string;
+    fullName: string;
     role: string;
     department?: string;
     major?: string;
-  }): Promise<{ user: any; token: string }> {
+  }): Promise<any> {
     const response = await apiClient.post('/auth/register', data);
-    if (response.token) {
-      localStorage.setItem('auth_token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
-    }
-    return response;
+    return response.data;
   },
 
   async getProfile(): Promise<any> {
-    return await apiClient.get('/auth/profile');
+    const response = await apiClient.get('/auth/profile');
+    return response.data;
   },
 
   logout() {
@@ -105,27 +128,39 @@ export const topicService = {
         if (value) params.append(key, value);
       });
     }
-    return await apiClient.get(`/topics?${params.toString()}`);
+    const response = await apiClient.get<PaginatedResponse<ThesisTopic> | ThesisTopic[]>(
+      `/topics?${params.toString()}`
+    );
+
+    // Handle both paginated and non-paginated responses
+    if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+      return (response.data as PaginatedResponse<ThesisTopic>).data;
+    }
+    return response.data as ThesisTopic[];
   },
 
   async getById(id: string): Promise<ThesisTopic> {
-    return await apiClient.get(`/topics/${id}`);
+    const response = await apiClient.get<ThesisTopic>(`/topics/${id}`);
+    return response.data;
   },
 
   async getByInstructor(): Promise<ThesisTopic[]> {
-    return await apiClient.get('/topics/my-topics');
+    const response = await apiClient.get<ThesisTopic[]>('/topics/my-topics');
+    return response.data;
   },
 
   async create(data: TopicFormData): Promise<ThesisTopic> {
-    return await apiClient.post('/topics', data);
+    const response = await apiClient.post<ThesisTopic>('/topics', data);
+    return response.data;
   },
 
   async update(id: string, data: Partial<TopicFormData>): Promise<ThesisTopic> {
-    return await apiClient.patch(`/topics/${id}`, data);
+    const response = await apiClient.patch<ThesisTopic>(`/topics/${id}`, data);
+    return response.data;
   },
 
   async delete(id: string): Promise<void> {
-    return await apiClient.delete(`/topics/${id}`);
+    await apiClient.delete(`/topics/${id}`);
   },
 };
 
@@ -138,19 +173,23 @@ export const applicationService = {
         if (value) params.append(key, value);
       });
     }
-    return await apiClient.get(`/registrations?${params.toString()}`);
+    const response = await apiClient.get<ThesisApplication[]>(`/registrations?${params.toString()}`);
+    return response.data;
   },
 
   async getByStudent(): Promise<ThesisApplication[]> {
-    return await apiClient.get('/registrations/my-applications');
+    const response = await apiClient.get<ThesisApplication[]>('/registrations/my-applications');
+    return response.data;
   },
 
   async getPendingReviews(): Promise<ThesisApplication[]> {
-    return await apiClient.get('/registrations/pending-reviews');
+    const response = await apiClient.get<ThesisApplication[]>('/registrations/pending-reviews');
+    return response.data;
   },
 
   async getMyStudents(): Promise<ThesisApplication[]> {
-    return await apiClient.get('/registrations/my-students');
+    const response = await apiClient.get<ThesisApplication[]>('/registrations/my-students');
+    return response.data;
   },
 
   async create(data: ApplicationFormData): Promise<ThesisApplication> {
@@ -160,15 +199,18 @@ export const applicationService = {
     formData.append('motivationLetter', data.motivationLetter);
 
     // Handle file uploads
-    data.documents?.forEach((file, index) => {
-      formData.append(`documents`, file);
-    });
+    if (data.documents && data.documents.length > 0) {
+      data.documents.forEach((file) => {
+        formData.append('documents', file);
+      });
+    }
 
-    return await apiClient.post('/registrations/apply', formData, {
+    const response = await apiClient.post<ThesisApplication>('/registrations/apply', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
+    return response.data;
   },
 
   async updateStatus(
@@ -176,19 +218,21 @@ export const applicationService = {
     status: RegistrationStatus,
     notes?: string
   ): Promise<ThesisApplication> {
-    return await apiClient.post('/registrations/review', {
+    const response = await apiClient.post<ThesisApplication>('/registrations/review', {
       registrationId,
-      status,
+      decision: status === 'INSTRUCTOR_ACCEPTED' ? 'ACCEPT' : 'REJECT',
       notes,
     });
+    return response.data;
   },
 
   async update(id: string, data: Partial<ApplicationFormData>): Promise<ThesisApplication> {
-    return await apiClient.patch(`/registrations/${id}`, data);
+    const response = await apiClient.patch<ThesisApplication>(`/registrations/${id}`, data);
+    return response.data;
   },
 
   async withdraw(id: string): Promise<void> {
-    return await apiClient.delete(`/registrations/${id}`);
+    await apiClient.delete(`/registrations/${id}`);
   },
 };
 
@@ -199,43 +243,51 @@ export const verificationService = {
     formData.append('file', file);
     formData.append('semester', semester);
 
-    return await apiClient.post('/verification/upload', formData, {
+    const response = await apiClient.post('/verification/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
+    return response.data;
   },
 
   async getHistory(): Promise<any[]> {
-    return await apiClient.get('/verification/history');
+    const response = await apiClient.get('/verification/history');
+    return response.data;
   },
 
   async getLatest(): Promise<any> {
-    return await apiClient.get('/verification/latest');
+    const response = await apiClient.get('/verification/latest');
+    return response.data;
   },
 
   async getBatch(batchId: string): Promise<any> {
-    return await apiClient.get(`/verification/${batchId}`);
+    const response = await apiClient.get(`/verification/${batchId}`);
+    return response.data;
   },
 
   async reprocessBatch(batchId: string): Promise<any> {
-    return await apiClient.post(`/verification/process/${batchId}`);
+    const response = await apiClient.post(`/verification/process/${batchId}`);
+    return response.data;
   },
 };
 
 // Reports APIs
 export const reportService = {
   async getSummary(): Promise<DashboardStats> {
-    return await apiClient.get('/reports/summary');
+    const response = await apiClient.get<DashboardStats>('/reports/summary');
+    return response.data;
   },
 
   async getInstructorLoad(): Promise<any[]> {
-    return await apiClient.get('/reports/instructor-load');
+    const response = await apiClient.get('/reports/instructor-load');
+    return response.data;
   },
 
   async getDepartmentStats(department?: string): Promise<any> {
     const params = department ? `?department=${department}` : '';
-    return await apiClient.get(`/reports/department-stats${params}`);
+    const response = await apiClient.get(`/reports/department-stats${params}`);
+    return response.data;
   },
 
   async exportToExcel(type: 'topics' | 'registrations' | 'instructor-load'): Promise<Blob> {
