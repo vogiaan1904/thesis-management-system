@@ -20,7 +20,12 @@ function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
     return <Navigate to="/login" replace />;
   }
 
-  if (!allowedRoles.includes(user.role)) {
+  // Case-insensitive role check to handle both UPPERCASE and lowercase roles
+  const userRole = user.role.toLowerCase();
+  const normalizedAllowedRoles = allowedRoles.map(role => role.toLowerCase());
+
+  if (!normalizedAllowedRoles.includes(userRole)) {
+    console.log('Access denied. User role:', user.role, 'Allowed roles:', allowedRoles);
     return <Navigate to="/login" replace />;
   }
 
@@ -87,9 +92,9 @@ function AppRoutes() {
           user ? (
             <Navigate
               to={
-                user.role === 'student'
+                user.role.toLowerCase() === 'student'
                   ? '/student'
-                  : user.role === 'instructor'
+                  : user.role.toLowerCase() === 'instructor'
                   ? '/instructor'
                   : '/admin'
               }

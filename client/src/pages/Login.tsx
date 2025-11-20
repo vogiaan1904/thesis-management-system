@@ -21,35 +21,52 @@ export default function Login() {
     setLoading(true);
 
     try {
+      console.log('Attempting login with userId:', userId);
       const success = await login(userId, password);
+      console.log('Login success:', success);
+
       if (success) {
         // Get user from localStorage (set by authService)
         const userStr = localStorage.getItem('user');
+        console.log('User from localStorage:', userStr);
+
         if (userStr) {
           const user = JSON.parse(userStr);
+          console.log('Parsed user:', user);
+          console.log('User role:', user.role);
+
           // Redirect based on role
           switch (user.role) {
             case 'STUDENT':
             case 'student':
+              console.log('Navigating to /student');
               navigate('/student');
               break;
             case 'INSTRUCTOR':
             case 'instructor':
+              console.log('Navigating to /instructor');
               navigate('/instructor');
               break;
             case 'ADMIN':
             case 'DEPARTMENT':
             case 'admin':
+              console.log('Navigating to /admin');
               navigate('/admin');
               break;
             default:
+              console.log('Unknown role, navigating to /');
               navigate('/');
           }
+        } else {
+          console.error('No user in localStorage after successful login');
+          setError('Login succeeded but user data not found');
         }
       } else {
-        setError('Invalid email or password');
+        console.error('Login returned false');
+        setError('Invalid User ID or password');
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError('Login failed. Please try again.');
     } finally {
       setLoading(false);
