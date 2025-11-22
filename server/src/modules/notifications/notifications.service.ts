@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
-import { ConfigService } from '@nestjs/config';
+import { AppConfigService } from '../../shared/services/config.service';
 
 @Injectable()
 export class NotificationsService {
@@ -8,7 +8,7 @@ export class NotificationsService {
 
   constructor(
     private readonly mailerService: MailerService,
-    private readonly configService: ConfigService,
+    private readonly configService: AppConfigService,
   ) {}
 
   async notifyInstructor(registration: any) {

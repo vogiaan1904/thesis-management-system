@@ -27,19 +27,16 @@ export default function Login() {
         const userStr = localStorage.getItem('user');
         if (userStr) {
           const user = JSON.parse(userStr);
-          // Redirect based on role
-          switch (user.role) {
-            case 'STUDENT':
+          // Redirect based on role (now normalized to lowercase)
+          switch (user.role.toLowerCase()) {
             case 'student':
               navigate('/student');
               break;
-            case 'INSTRUCTOR':
             case 'instructor':
               navigate('/instructor');
               break;
-            case 'ADMIN':
-            case 'DEPARTMENT':
             case 'admin':
+            case 'department':
               navigate('/admin');
               break;
             default:
@@ -47,7 +44,7 @@ export default function Login() {
           }
         }
       } else {
-        setError('Invalid email or password');
+        setError('Invalid user ID or password');
       }
     } catch (err) {
       setError('Login failed. Please try again.');
@@ -172,7 +169,7 @@ export default function Login() {
                         className="w-full text-left px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
                       >
                         <p className="font-medium text-gray-900">
-                          {student.name}
+                          {student.fullName}
                         </p>
                         <p className="text-xs text-gray-600">
                           {student.email}
@@ -195,7 +192,7 @@ export default function Login() {
                         className="w-full text-left px-3 py-2 bg-purple-50 hover:bg-purple-100 rounded-md transition-colors"
                       >
                         <p className="font-medium text-gray-900">
-                          {instructor.name}
+                          {instructor.fullName}
                         </p>
                         <p className="text-xs text-gray-600">
                           {instructor.email}
@@ -218,7 +215,7 @@ export default function Login() {
                         className="w-full text-left px-3 py-2 bg-green-50 hover:bg-green-100 rounded-md transition-colors"
                       >
                         <p className="font-medium text-gray-900">
-                          {admin.name}
+                          {admin.fullName}
                         </p>
                         <p className="text-xs text-gray-600">{admin.email}</p>
                       </button>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { applicationService, topicService } from '../../services/api';
-import { ThesisApplication, ThesisTopic, Instructor } from '../../types';
+import { ThesisApplication, ThesisTopic } from '../../types';
 import { Card, CardHeader, CardBody } from '../../components/common/Card';
 import StatusBadge from '../../components/common/StatusBadge';
 import Button from '../../components/common/Button';
@@ -12,14 +12,12 @@ import {
   CheckCircle,
   XCircle,
   Users,
-  BookOpen,
   Tag,
   Building2,
 } from 'lucide-react';
 
 export default function InstructorDashboard() {
-  const { user } = useAuth();
-  const instructor = user as Instructor;
+  useAuth();
 
   const [applications, setApplications] = useState<ThesisApplication[]>([]);
   const [topics, setTopics] = useState<ThesisTopic[]>([]);
@@ -167,9 +165,9 @@ export default function InstructorDashboard() {
                       </span>
                       <span
                         className={`px-2 py-1 text-xs rounded-full ${
-                          topic.status === 'Active'
+                          topic.status === 'ACTIVE'
                             ? 'bg-green-100 text-green-800'
-                            : topic.status === 'Full'
+                            : topic.status === 'FULL'
                             ? 'bg-red-100 text-red-800'
                             : 'bg-gray-100 text-gray-800'
                         }`}
@@ -180,13 +178,13 @@ export default function InstructorDashboard() {
                     <div className="flex items-center space-x-2">
                       <Users className="h-4 w-4 text-gray-500" />
                       <span className="text-sm font-medium">
-                        {topic.availableSlots}/{topic.totalSlots} slots
+                        {topic.maxStudents - topic.currentStudents}/{topic.maxStudents} slots
                       </span>
                     </div>
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">
-                      {topic.title}
+                      {topic.titleVn}
                     </h3>
                     {topic.titleEn && (
                       <p className="text-sm text-gray-500 italic">
@@ -199,12 +197,6 @@ export default function InstructorDashboard() {
                   </div>
                   <div className="flex flex-wrap items-center gap-3 mt-3">
                     <div className="flex items-center space-x-1">
-                      <BookOpen className="h-4 w-4 text-gray-400" />
-                      <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">
-                        {topic.researchArea}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-1">
                       <Tag className="h-4 w-4 text-gray-400" />
                       <span className="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded">
                         {topic.department}
@@ -213,7 +205,7 @@ export default function InstructorDashboard() {
                     <div className="flex items-center space-x-1">
                       <Building2 className="h-4 w-4 text-gray-400" />
                       <span className="text-xs text-gray-600">
-                        {topic.instructorDepartment}
+                        {topic.instructor?.department || topic.department}
                       </span>
                     </div>
                   </div>
@@ -269,16 +261,16 @@ export default function InstructorDashboard() {
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-semibold text-gray-900">
-                        {app.studentName}
+                        {app.student?.fullName}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        Student ID: {app.studentId}
+                        Student ID: {app.student?.userId}
                       </p>
                       <p className="text-sm text-gray-600">
-                        Topic: {app.topicTitle}
+                        Topic: {app.topic?.titleVn}
                       </p>
                       <p className="text-sm text-gray-600">
-                        Self-reported credits: {app.selfReportedCredits}
+                        Credits claimed: {app.creditsClaimed}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
                         Applied:{' '}
@@ -342,20 +334,20 @@ export default function InstructorDashboard() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {app.studentName}
+                            {app.student?.fullName}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {app.studentId}
+                            {app.student?.userId}
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900">
-                          {app.topicTitle}
+                          {app.topic?.titleVn}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {app.selfReportedCredits}
+                        {app.creditsClaimed}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <StatusBadge status={app.status} size="sm" />

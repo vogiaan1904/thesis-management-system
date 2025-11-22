@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import { applicationService } from '../../services/api';
-import { ThesisTopic, Student } from '../../types';
+import { ThesisTopic } from '../../types';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
-import { Upload, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
 interface ApplicationModalProps {
   isOpen: boolean;
@@ -17,12 +16,8 @@ export default function ApplicationModal({
   onClose,
   topic,
 }: ApplicationModalProps) {
-  const { user } = useAuth();
-  const student = user as Student;
-
-  const [credits, setCredits] = useState(student.creditsCompleted.toString());
+  const [credits, setCredits] = useState('');
   const [motivation, setMotivation] = useState('');
-  const [files, setFiles] = useState<FileList | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -38,23 +33,11 @@ export default function ApplicationModal({
         throw new Error('Please enter a valid number of credits');
       }
 
-      if (!files || files.length === 0) {
-        throw new Error('Please upload your transcript');
-      }
-
-      await applicationService.create(
-        {
-          topicId: topic.id,
-          selfReportedCredits: creditsNum,
-          motivationLetter: motivation,
-          documents: Array.from(files),
-        },
-        {
-          studentId: student.studentId,
-          studentName: student.name,
-          studentEmail: student.email,
-        }
-      );
+      await applicationService.create({
+        topicId: topic.id,
+        creditsClaimed: creditsNum,
+        motivationLetter: motivation || undefined,
+      });
 
       setSuccess(true);
       setTimeout(() => {
@@ -91,7 +74,7 @@ export default function ApplicationModal({
             Application Submitted Successfully!
           </h3>
           <p className="text-gray-600">
-            Your application has been sent to {topic.instructorName} for review.
+            Your application has been sent to {topic.instructor.fullName} for review.
             You will be notified of their decision.
           </p>
         </div>
@@ -103,7 +86,7 @@ export default function ApplicationModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Apply for: ${topic.title}`}
+      title={`Apply for: ${topic.titleVn}`}
       size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -118,12 +101,12 @@ export default function ApplicationModal({
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Instructor
           </label>
-          <p className="text-gray-900">{topic.instructorName}</p>
+          <p className="text-gray-900">{topic.instructor.fullName}</p>
           <a
-            href={`mailto:${topic.instructorEmail}`}
+            href={`mailto:${topic.instructor.email}`}
             className="text-sm text-blue-600 hover:underline"
           >
-            {topic.instructorEmail}
+            {topic.instructor.email}
           </a>
         </div>
 
@@ -146,37 +129,6 @@ export default function ApplicationModal({
           <p className="text-xs text-gray-500 mt-1">
             Enter the total number of credits you have completed
           </p>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Upload Transcript/Credits Screenshot *
-          </label>
-          <div className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center hover:border-blue-500 transition-colors">
-            <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-            <input
-              type="file"
-              accept=".pdf,.png,.jpg,.jpeg"
-              onChange={(e) => setFiles(e.target.files)}
-              className="hidden"
-              id="file-upload"
-              required
-            />
-            <label
-              htmlFor="file-upload"
-              className="cursor-pointer text-blue-600 hover:underline"
-            >
-              Click to upload
-            </label>
-            <p className="text-xs text-gray-500 mt-1">
-              PDF, PNG, or JPG (max 10MB)
-            </p>
-            {files && files.length > 0 && (
-              <p className="text-sm text-green-600 mt-2">
-                Selected: {files[0].name}
-              </p>
-            )}
-          </div>
         </div>
 
         <div>

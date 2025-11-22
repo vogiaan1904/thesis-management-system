@@ -1,4 +1,97 @@
+# Always update this CLAUDE.md file to be up-to-date with the context
+
 # Thesis Registration System - Backend Specification
+
+## Recent Changes (2024)
+
+### Department Admin Registration Filtering
+- **`getAllRegistrations()`** now filters out `PENDING_INSTRUCTOR_REVIEW` and `INSTRUCTOR_DENIED` statuses by default
+- Department admin only sees registrations that have been accepted by instructors and beyond:
+  - `INSTRUCTOR_ACCEPTED`
+  - `VERIFIED`
+  - `INVALID_CREDITS`
+  - `NOT_ENROLLED_EDUSOFT`
+  - `DEPARTMENT_REVOKED`
+- **Excel export** for registrations also follows this filtering logic
+- If a specific status filter is provided via query parameter, that filter takes precedence
+
+### API Field Name Fixes
+- Review endpoint expects `comment` field (not `notes`) in the request body for instructor comments
+
+---
+
+## Registration & Verification Flow
+
+### Overview
+The thesis registration system follows a multi-step verification process:
+
+1. **Student Application Phase**: Students apply for thesis topics
+2. **Instructor Review Phase**: Instructors accept/reject applications
+3. **Verification Phase**: Department admin verifies accepted registrations against EDUSoft data
+
+### Phase 1: Student Application
+- Students browse available topics and submit applications
+- Application includes: topic selection, self-reported credits (`creditsClaimed`), motivation letter
+- Status: `PENDING_INSTRUCTOR_REVIEW`
+
+### Phase 2: Instructor Review
+- Instructors review pending applications for their topics
+- Decision: ACCEPT or REJECT with optional comment
+- Status changes to: `INSTRUCTOR_ACCEPTED` or `INSTRUCTOR_DENIED`
+
+### Phase 3: EDUSoft Verification (Post-Registration Period)
+
+After the registration period closes, the department admin performs batch verification:
+
+#### Step 1: Upload EDUSoft Data
+Admin uploads an Excel file (.xls/.xlsx) exported from EDUSoft containing enrolled students data.
+
+**Expected Excel Format (from EDUSoft Report):**
+| Column | Description |
+|--------|-------------|
+| No. | Row number (Column 1 - skipped) |
+| Student ID | Student identifier e.g., ITITIU20001 (Column 2 - match key) |
+| Full name | Student's full name (Column 3) |
+| Date of birth | Student's date of birth (Column 4) |
+| Class | Student's class/cohort (Column 5) |
+| Credits | Student's accumulated credits (Column 6 - optional) |
+
+**Note**: If the Credits column (Column 6) is present and contains numeric values, the system will validate that the student's credits meet the claimed credits. If the column is empty or missing, students found in the Excel are automatically verified.
+
+#### Step 2: Verification Process
+The server processes the uploaded file and validates `INSTRUCTOR_ACCEPTED` registrations:
+
+```
+For each INSTRUCTOR_ACCEPTED registration:
+1. Find student in uploaded EDUSoft data (match by Student ID)
+2. Apply validation rules:
+   - Student NOT found in Excel → Status: NOT_ENROLLED_EDUSOFT
+   - Student found, credits insufficient → Status: INVALID_CREDITS
+   - Student found, all checks pass → Status: VERIFIED
+```
+
+#### Step 3: Verification Results
+- **VERIFIED**: Student is enrolled in thesis course on EDUSoft and meets requirements
+- **NOT_ENROLLED_EDUSOFT**: Student has not registered for thesis course on EDUSoft system
+- **INVALID_CREDITS**: Student does not have enough credits (when credit validation is implemented)
+- **DEPARTMENT_REVOKED**: Manually revoked by department admin
+
+### Registration Status Flow
+```
+PENDING_INSTRUCTOR_REVIEW
+    ├── INSTRUCTOR_ACCEPTED
+    │       ├── VERIFIED
+    │       ├── INVALID_CREDITS
+    │       ├── NOT_ENROLLED_EDUSOFT
+    │       └── DEPARTMENT_REVOKED
+    └── INSTRUCTOR_DENIED
+```
+
+### API Endpoints for Verification
+- `POST /api/verification/upload` - Upload EDUSoft Excel file
+- `GET /api/verification/history` - View past verification batches
+- `GET /api/verification/latest` - Get latest verification results
+- `POST /api/verification/process/:batchId` - Reprocess a verification batch
 
 ## Project Overview
 Build a NestJS backend for a university thesis registration system where students apply for thesis topics, instructors approve/deny applications, and the department performs batch verification against EDUSoft data.

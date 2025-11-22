@@ -5,7 +5,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { AppConfigService } from '../../shared/services/config.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ApplyTopicDto } from './dto/apply-topic.dto';
 import { ReviewApplicationDto, ReviewDecision } from './dto/review-application.dto';
@@ -18,16 +18,16 @@ import { RegistrationsGateway } from './registrations.gateway';
 export class RegistrationsService {
   constructor(
     private prisma: PrismaService,
-    private configService: ConfigService,
+    private configService: AppConfigService,
     private registrationsGateway: RegistrationsGateway,
   ) {}
 
   private isRegistrationOpen(): boolean {
     const now = new Date();
     const startDate = new Date(
-      this.configService.get('app.registrationStartDate'),
+      this.configService.appConfig.registrationStartDate,
     );
-    const endDate = new Date(this.configService.get('app.registrationEndDate'));
+    const endDate = new Date(this.configService.appConfig.registrationEndDate);
     return now >= startDate && now <= endDate;
   }
 
@@ -72,9 +72,7 @@ export class RegistrationsService {
     }
 
     // Step 4: Check maximum applications limit
-    const maxApplications = this.configService.get(
-      'app.maxApplicationsPerStudent',
-    );
+    const maxApplications = this.configService.appConfig.maxApplicationsPerStudent;
     const applicationCount = await this.prisma.registration.count({
       where: {
         studentId: studentId,
@@ -413,6 +411,19 @@ export class RegistrationsService {
 
     if (filterDto?.status) {
       where.status = filterDto.status;
+    } else {
+      // By default, only show registrations that have been processed by instructors
+      // Department admin should only see accepted registrations and their verification results
+      // Exclude PENDING_INSTRUCTOR_REVIEW and INSTRUCTOR_DENIED
+      where.status = {
+        in: [
+          RegistrationStatus.INSTRUCTOR_ACCEPTED,
+          RegistrationStatus.VERIFIED,
+          RegistrationStatus.INVALID_CREDITS,
+          RegistrationStatus.NOT_ENROLLED_EDUSOFT,
+          RegistrationStatus.DEPARTMENT_REVOKED,
+        ],
+      };
     }
 
     const [registrations, total] = await Promise.all([

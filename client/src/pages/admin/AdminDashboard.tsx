@@ -37,7 +37,7 @@ export default function AdminDashboard() {
         applicationService.getAll(),
         reportService.getSummary(),
       ]);
-      setApplications(appsData);
+      setApplications(appsData.data);
       setStats(statsData);
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -227,21 +227,21 @@ export default function AdminDashboard() {
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-semibold text-gray-900">
-                        {app.studentName}
+                        {app.student?.fullName}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        Student ID: {app.studentId}
+                        Student ID: {app.student?.userId}
                       </p>
                       <p className="text-sm text-gray-600">
-                        Topic: {app.topicTitle}
+                        Topic: {app.topic?.titleVn}
                       </p>
                       <p className="text-sm text-gray-600">
-                        Instructor: {app.instructorName}
+                        Instructor: {app.topic?.instructor?.fullName}
                       </p>
                       {app.status === 'INVALID_CREDITS' && (
                         <p className="text-sm text-red-600 mt-2">
-                          Self-reported: {app.selfReportedCredits} | Actual:{' '}
-                          {app.actualCredits || 'N/A'}
+                          Claimed: {app.creditsClaimed} | Verified:{' '}
+                          {app.creditsVerified || 'N/A'}
                         </p>
                       )}
                     </div>
@@ -311,24 +311,24 @@ export default function AdminDashboard() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {app.studentName}
+                            {app.student?.fullName}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {app.studentId}
+                            {app.student?.userId}
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900">
-                          {app.topicTitle}
+                          {app.topic?.titleVn}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {app.instructorName}
+                        {app.topic?.instructor?.fullName}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {app.selfReportedCredits} /{' '}
-                        {app.actualCredits || 'N/A'}
+                        {app.creditsClaimed} /{' '}
+                        {app.creditsVerified || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <StatusBadge status={app.status} size="sm" />

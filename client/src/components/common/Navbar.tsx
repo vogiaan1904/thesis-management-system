@@ -19,6 +19,7 @@ export default function Navbar() {
       case 'instructor':
         return 'Instructor Portal';
       case 'admin':
+      case 'department':
         return 'Admin Portal';
       default:
         return '';
@@ -33,6 +34,7 @@ export default function Navbar() {
       case 'instructor':
         return '/instructor';
       case 'admin':
+      case 'department':
         return '/admin';
       default:
         return '/';
@@ -57,7 +59,7 @@ export default function Navbar() {
               </span>
               <div className="flex items-center space-x-2">
                 <User className="h-5 w-5 text-gray-500" />
-                <span className="text-gray-700">{user.name}</span>
+                <span className="text-gray-700">{user.fullName}</span>
               </div>
               <button
                 onClick={handleLogout}

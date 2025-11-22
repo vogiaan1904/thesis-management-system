@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
+import toast from 'react-hot-toast';
 import {
   ThesisTopic,
   ThesisApplication,
@@ -6,6 +7,7 @@ import {
   ApplicationFormData,
   TopicFormData,
   DashboardStats,
+  PaginatedResponse,
 } from '../types';
 
 // API Configuration
@@ -23,15 +25,6 @@ interface AuthResponse {
     department?: string;
     major?: string;
     program?: string;
-  };
-}
-
-interface PaginatedResponse<T> {
-  data: T[];
-  meta: {
-    total: number;
-    page: number;
-    lastPage: number;
   };
 }
 
@@ -63,12 +56,40 @@ apiClient.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error: AxiosError) => {
+  (error: AxiosError<{ message?: string; error?: string }>) => {
+    // Handle specific error cases
     if (error.response?.status === 401) {
-      // Unauthorized - clear token and redirect to login
+      // Unauthorized - clear token and let React Router handle redirect
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
-      window.location.href = '/';
+
+      // Dispatch custom event to notify AuthContext of logout
+      window.dispatchEvent(new Event('auth-logout'));
+
+      // Only show toast if we're not already on the login page
+      if (!window.location.pathname.includes('/login')) {
+        toast.error('Session expired. Please log in again.');
+      }
+
+      // Don't force redirect here - let React Router's ProtectedRoute handle it
+      // This prevents navigation issues and allows proper React state cleanup
+    } else if (error.response?.status === 403) {
+      toast.error('You do not have permission to perform this action.');
+    } else if (error.response?.status === 404) {
+      toast.error('Resource not found.');
+    } else if (error.response?.status === 409) {
+      const message = error.response?.data?.message || 'Conflict error occurred.';
+      toast.error(message);
+    } else if (error.response?.status === 500) {
+      toast.error('Server error. Please try again later.');
+    } else if (error.code === 'ERR_NETWORK') {
+      toast.error('Network error. Please check your connection.');
+    } else if (error.response?.data?.message) {
+      // Show server error message if available
+      const message = Array.isArray(error.response.data.message)
+        ? error.response.data.message.join(', ')
+        : error.response.data.message;
+      toast.error(message);
     }
     return Promise.reject(error);
   }
@@ -81,8 +102,15 @@ export const authService = {
     const data = response.data;
 
     if (data.access_token) {
+      // Normalize role to lowercase before storing
+      const normalizedUser = {
+        ...data.user,
+        role: data.user.role.toLowerCase(),
+      };
       localStorage.setItem('auth_token', data.access_token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('user', JSON.stringify(normalizedUser));
+      // Return normalized data
+      data.user = normalizedUser;
     }
 
     return data;
@@ -103,7 +131,12 @@ export const authService = {
 
   async getProfile(): Promise<any> {
     const response = await apiClient.get('/auth/profile');
-    return response.data;
+    const profile = response.data;
+    // Normalize role to lowercase
+    return {
+      ...profile,
+      role: profile.role.toLowerCase(),
+    };
   },
 
   logout() {
@@ -115,28 +148,31 @@ export const authService = {
 // Topic APIs
 export const topicService = {
   async getAll(filters?: {
+    semester?: string;
     topicType?: string;
     programType?: string;
     department?: string;
-    researchArea?: string;
     search?: string;
     status?: string;
-  }): Promise<ThesisTopic[]> {
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedResponse<ThesisTopic>> {
     const params = new URLSearchParams();
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
-        if (value) params.append(key, value);
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, String(value));
+        }
       });
     }
-    const response = await apiClient.get<PaginatedResponse<ThesisTopic> | ThesisTopic[]>(
+    // Set default pagination
+    if (!params.has('page')) params.append('page', '1');
+    if (!params.has('limit')) params.append('limit', '100');
+
+    const response = await apiClient.get<PaginatedResponse<ThesisTopic>>(
       `/topics?${params.toString()}`
     );
-
-    // Handle both paginated and non-paginated responses
-    if (response.data && typeof response.data === 'object' && 'data' in response.data) {
-      return (response.data as PaginatedResponse<ThesisTopic>).data;
-    }
-    return response.data as ThesisTopic[];
+    return response.data;
   },
 
   async getById(id: string): Promise<ThesisTopic> {
@@ -151,29 +187,38 @@ export const topicService = {
 
   async create(data: TopicFormData): Promise<ThesisTopic> {
     const response = await apiClient.post<ThesisTopic>('/topics', data);
+    toast.success('Topic created successfully!');
     return response.data;
   },
 
   async update(id: string, data: Partial<TopicFormData>): Promise<ThesisTopic> {
     const response = await apiClient.patch<ThesisTopic>(`/topics/${id}`, data);
+    toast.success('Topic updated successfully!');
     return response.data;
   },
 
   async delete(id: string): Promise<void> {
     await apiClient.delete(`/topics/${id}`);
+    toast.success('Topic deleted successfully!');
   },
 };
 
 // Application/Registration APIs
 export const applicationService = {
-  async getAll(filters?: { status?: string; topicId?: string }): Promise<ThesisApplication[]> {
+  async getAll(filters?: { status?: string; topicId?: string; page?: number; limit?: number }): Promise<PaginatedResponse<ThesisApplication>> {
     const params = new URLSearchParams();
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
-        if (value) params.append(key, value);
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, String(value));
+        }
       });
     }
-    const response = await apiClient.get<ThesisApplication[]>(`/registrations?${params.toString()}`);
+    // Set default pagination
+    if (!params.has('page')) params.append('page', '1');
+    if (!params.has('limit')) params.append('limit', '100');
+
+    const response = await apiClient.get<PaginatedResponse<ThesisApplication>>(`/registrations?${params.toString()}`);
     return response.data;
   },
 
@@ -193,35 +238,28 @@ export const applicationService = {
   },
 
   async create(data: ApplicationFormData): Promise<ThesisApplication> {
-    const formData = new FormData();
-    formData.append('topicId', data.topicId);
-    formData.append('selfReportedCredits', data.selfReportedCredits.toString());
-    formData.append('motivationLetter', data.motivationLetter);
+    // TODO: Handle file upload separately if transcriptFile is provided
+    const payload = {
+      topicId: data.topicId,
+      creditsClaimed: data.creditsClaimed,
+      motivationLetter: data.motivationLetter,
+      transcriptUrl: undefined, // File upload should be handled separately
+    };
 
-    // Handle file uploads
-    if (data.documents && data.documents.length > 0) {
-      data.documents.forEach((file) => {
-        formData.append('documents', file);
-      });
-    }
-
-    const response = await apiClient.post<ThesisApplication>('/registrations/apply', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await apiClient.post<ThesisApplication>('/registrations/apply', payload);
+    toast.success('Application submitted successfully!');
     return response.data;
   },
 
   async updateStatus(
     registrationId: string,
     status: RegistrationStatus,
-    notes?: string
+    comment?: string
   ): Promise<ThesisApplication> {
     const response = await apiClient.post<ThesisApplication>('/registrations/review', {
       registrationId,
       decision: status === 'INSTRUCTOR_ACCEPTED' ? 'ACCEPT' : 'REJECT',
-      notes,
+      comment,
     });
     return response.data;
   },

@@ -22,6 +22,7 @@ export class VerificationService {
       data: {
         semester: uploadDto.semester,
         fileName: fileName,
+        filePath: filePath, // Store full path for reprocessing
         uploadedBy: uploadedBy,
         results: { total: 0, verified: 0, invalidCredits: 0, notEnrolled: 0 },
       },
@@ -76,10 +77,10 @@ export class VerificationService {
       throw new NotFoundException('Verification batch not found');
     }
 
-    // Re-add job to queue
+    // Re-add job to queue with the stored file path
     await this.verificationQueue.add('verify-excel', {
       batchId: batch.id,
-      filePath: batch.fileName, // Note: This assumes file is still available
+      filePath: batch.filePath,
     });
 
     return {

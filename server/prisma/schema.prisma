@@ -124,6 +124,7 @@ model VerificationBatch {
   id         String  @id @default(uuid())
   semester   String
   fileName   String
+  filePath   String  // Full path for reprocessing
   uploadedBy String
   results    Json // { total: number; verified: number; invalid: number; notEnrolled: number }
   errors     String? @db.Text

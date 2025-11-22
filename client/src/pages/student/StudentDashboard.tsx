@@ -2,17 +2,15 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { applicationService } from '../../services/api';
-import { ThesisApplication, Student } from '../../types';
+import { ThesisApplication } from '../../types';
 import { Card, CardHeader, CardBody } from '../../components/common/Card';
 import StatusBadge from '../../components/common/StatusBadge';
 import { FileText, Search, Clock, CheckCircle } from 'lucide-react';
 
 export default function StudentDashboard() {
-  const { user } = useAuth();
+  useAuth();
   const [applications, setApplications] = useState<ThesisApplication[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const student = user as Student;
 
   useEffect(() => {
     const fetchApplications = async () => {
@@ -128,10 +126,10 @@ export default function StudentDashboard() {
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-semibold text-gray-900">
-                        {app.topicTitle}
+                        {app.topic?.titleVn}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        Instructor: {app.instructorName}
+                        Instructor: {app.topic?.instructor?.fullName}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
                         Applied: {new Date(app.createdAt).toLocaleDateString()}
@@ -139,12 +137,12 @@ export default function StudentDashboard() {
                     </div>
                     <StatusBadge status={app.status} />
                   </div>
-                  {app.instructorNotes && (
+                  {app.instructorComment && (
                     <div className="mt-3 p-3 bg-gray-50 rounded text-sm">
                       <p className="font-medium text-gray-700">
                         Instructor Notes:
                       </p>
-                      <p className="text-gray-600">{app.instructorNotes}</p>
+                      <p className="text-gray-600">{app.instructorComment}</p>
                     </div>
                   )}
                 </div>

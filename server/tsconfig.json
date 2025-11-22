@@ -16,6 +16,24 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "@/*": ["src/*"],
+      "@modules/*": ["src/modules/*"],
+      "@infra/*": ["src/infra/*"],
+      "@interfaces/*": ["src/shared/interfaces/*"],
+      "@services/*": ["src/shared/services/*"],
+      "@constants/*": ["src/shared/constants/*"],
+      "@utils/*": ["src/shared/utils/*"],
+      "@repositories/*": ["src/shared/repositories/*"],
+      "@decorators/*": ["src/common/decorators/*"],
+      "@filters/*": ["src/common/filters/*"],
+      "@guards/*": ["src/common/guards/*"],
+      "@interceptors/*": ["src/common/interceptors/*"],
+      "@middlewares/*": ["src/common/middlewares/*"],
+      "@exceptions/*": ["src/common/exceptions/*"],
+      "@protogen/*": ["src/protogen/*"],
+      "@protos/*": ["src/protos/*"]
+    }
   }
 }

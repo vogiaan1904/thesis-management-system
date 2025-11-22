@@ -1,11 +1,15 @@
 // User Types
-export type UserRole = 'student' | 'instructor' | 'admin';
+export type UserRole = 'student' | 'instructor' | 'admin' | 'department';
 
 export interface User {
   id: string;
-  name: string;
+  userId: string;
+  fullName: string;
   email: string;
   role: UserRole;
+  department?: string;
+  major?: string;
+  program?: string;
 }
 
 export interface Student extends User {
@@ -37,66 +41,102 @@ export type RegistrationStatus =
   | 'NOT_ENROLLED_EDUSOFT'
   | 'DEPARTMENT_REVOKED';
 
-// Topic Types
-export type TopicType = 'GD1-DCLV' | 'GD1-ĐACN' | 'GD1-ĐAMHKTMT' | 'LVTN' | 'ĐATN';
-export type TopicStatus = 'Active' | 'Inactive' | 'Full';
+// Topic Types (matching server enums)
+export type TopicType = 'DCLV' | 'DACN' | 'DAMHKTMT' | 'LVTN' | 'DATN';
+export type TopicStatus = 'ACTIVE' | 'INACTIVE' | 'FULL';
 export type ProgramType = 'CQ' | 'CN' | 'B2' | 'SN' | 'VLVH' | 'TX';
 
-export interface ThesisTopic {
+// Instructor info from Topic response
+export interface TopicInstructor {
   id: string;
-  // Topic Identification
-  topicCode: string; // Format: HK251-DCLV-010
-  topicType: TopicType;
-  title: string;
-  titleEn?: string; // English title (optional)
-
-  // Instructor Information
-  instructorId: string;
-  instructorName: string;
-  instructorTitle: string; // ThS., TS., PGS., etc.
-  instructorEmployeeId: string; // e.g., 003282
-  instructorEmail: string;
-  instructorDepartment: string;
-
-  // Topic Configuration
-  totalSlots: number;
-  availableSlots: number;
-  pendingApplications: number;
-  status: TopicStatus;
-  programTypes: ProgramType[]; // Allowed programs
-  department: string; // e.g., Computer Science
-
-  // Topic Content
-  description: string;
-  phase1Requirements: string; // Preliminary research requirements
-  phase2Requirements: string; // Thesis implementation requirements
-  references: string[]; // Academic papers/resources
-  requiredSkills: string[]; // Prerequisites
-  researchArea: string;
-
-  createdAt: Date;
-  updatedAt: Date;
+  userId: string;
+  fullName: string;
+  email: string;
+  department: string | null;
 }
 
-// Application Types
+// Reference format from server
+export interface TopicReference {
+  text: string;
+  url?: string;
+}
+
+// Topic model matching server response
+export interface ThesisTopic {
+  id: string;
+  topicCode: string;
+  semester: string;
+  topicType: TopicType;
+  titleVn: string;
+  titleEn?: string | null;
+  description: string;
+  phase1Requirements?: string | null;
+  phase2Requirements?: string | null;
+  maxStudents: number;
+  currentStudents: number;
+  programTypes: string[];
+  prerequisites?: string | null;
+  references?: TopicReference[] | null;
+  status: TopicStatus;
+  department: string;
+  instructorId: string;
+  instructor: TopicInstructor;
+  _count?: {
+    registrations: number;
+  };
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
+
+// Paginated response wrapper
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+// Application/Registration Types (matching server response)
 export interface ThesisApplication {
   id: string;
-  studentId: string;
-  studentName: string;
-  studentEmail: string;
-  topicId: string;
-  topicTitle: string;
-  instructorId: string;
-  instructorName: string;
   status: RegistrationStatus;
-  selfReportedCredits: number;
-  actualCredits?: number;
-  motivationLetter?: string;
-  documents: UploadedDocument[];
-  createdAt: Date;
-  updatedAt: Date;
-  instructorNotes?: string;
-  departmentNotes?: string;
+  creditsClaimed?: number | null;
+  creditsVerified?: number | null;
+  transcriptUrl?: string | null;
+  motivationLetter?: string | null;
+  instructorComment?: string | null;
+  departmentComment?: string | null;
+  reviewedBy?: string | null;
+  reviewedAt?: string | Date | null;
+  verifiedBy?: string | null;
+  verifiedAt?: string | Date | null;
+  studentId: string;
+  student?: {
+    id: string;
+    userId: string;
+    fullName: string;
+    email: string;
+    major?: string | null;
+    program?: string | null;
+  };
+  topicId: string;
+  topic?: {
+    id: string;
+    titleVn: string;
+    titleEn?: string | null;
+    topicCode?: string;
+    description?: string;
+    instructor?: {
+      id: string;
+      fullName: string;
+      email: string;
+    };
+  };
+  createdAt: string | Date;
+  updatedAt: string | Date;
 }
 
 export interface UploadedDocument {
@@ -139,26 +179,26 @@ export interface DashboardStats {
   invalidRegistrations: number;
 }
 
-// Form Types
+// Form Types (matching server DTOs)
 export interface ApplicationFormData {
   topicId: string;
-  selfReportedCredits: number;
-  motivationLetter: string;
-  documents: File[];
+  creditsClaimed?: number;
+  motivationLetter?: string;
+  transcriptFile?: File;
 }
 
 export interface TopicFormData {
   topicCode: string;
+  semester: string;
   topicType: TopicType;
-  title: string;
+  titleVn: string;
   titleEn?: string;
   description: string;
-  phase1Requirements: string;
-  phase2Requirements: string;
-  references: string[];
-  requiredSkills: string[];
-  programTypes: ProgramType[];
+  phase1Requirements?: string;
+  phase2Requirements?: string;
+  references?: TopicReference[];
+  prerequisites?: string;
+  programTypes: string[];
   department: string;
-  researchArea: string;
-  totalSlots: number;
+  maxStudents: number;
 }

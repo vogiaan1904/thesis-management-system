@@ -3,8 +3,8 @@ import {
   UnauthorizedException,
   ConflictException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { AppConfigService } from '../../shared/services/config.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
@@ -16,9 +16,9 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-    private configService: ConfigService,
+    private configService: AppConfigService,
   ) {
-    this.saltRounds = this.configService.get<number>('app.bcryptSaltRounds', 10);
+    this.saltRounds = this.configService.appConfig.bcryptSaltRounds;
   }
 
   async validateUser(userId: string, password: string): Promise<any> {

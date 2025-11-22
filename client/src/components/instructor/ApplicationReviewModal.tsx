@@ -86,8 +86,8 @@ export default function ApplicationReviewModal({
           </h3>
           <p className="text-gray-600">
             {success === 'accepted'
-              ? `${application.studentName} has been accepted for the topic. A slot has been reserved.`
-              : `${application.studentName} has been notified of the denial.`}
+              ? `${application.student?.fullName} has been accepted for the topic. A slot has been reserved.`
+              : `${application.student?.fullName} has been notified of the denial.`}
           </p>
         </div>
       </Modal>
@@ -116,32 +116,32 @@ export default function ApplicationReviewModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-500">Name</p>
-              <p className="font-medium">{application.studentName}</p>
+              <p className="font-medium">{application.student?.fullName}</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Student ID</p>
-              <p className="font-medium">{application.studentId}</p>
+              <p className="font-medium">{application.student?.userId}</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Email</p>
               <a
-                href={`mailto:${application.studentEmail}`}
+                href={`mailto:${application.student?.email}`}
                 className="font-medium text-blue-600 hover:underline flex items-center space-x-1"
               >
                 <Mail className="h-4 w-4" />
-                <span>{application.studentEmail}</span>
+                <span>{application.student?.email}</span>
               </a>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Self-Reported Credits</p>
-              <p className="font-medium">{application.selfReportedCredits}</p>
+              <p className="text-sm text-gray-500">Credits Claimed</p>
+              <p className="font-medium">{application.creditsClaimed}</p>
             </div>
           </div>
         </div>
 
         <div className="bg-blue-50 rounded-lg p-4">
           <h4 className="font-semibold text-gray-900 mb-3">Topic</h4>
-          <p className="font-medium">{application.topicTitle}</p>
+          <p className="font-medium">{application.topic?.titleVn}</p>
         </div>
 
         {application.motivationLetter && (
@@ -157,34 +157,25 @@ export default function ApplicationReviewModal({
           </div>
         )}
 
-        <div>
-          <h4 className="font-semibold text-gray-900 mb-2">
-            Uploaded Documents
-          </h4>
-          {application.documents.length > 0 ? (
-            <div className="space-y-2">
-              {application.documents.map((doc) => (
-                <div
-                  key={doc.id}
-                  className="flex items-center space-x-3 p-3 bg-gray-50 rounded"
-                >
-                  <FileText className="h-5 w-5 text-gray-500" />
-                  <span className="text-sm font-medium">{doc.name}</span>
-                  <a
-                    href={doc.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 text-sm hover:underline"
-                  >
-                    View
-                  </a>
-                </div>
-              ))}
+        {application.transcriptUrl && (
+          <div>
+            <h4 className="font-semibold text-gray-900 mb-2">
+              Transcript Document
+            </h4>
+            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded">
+              <FileText className="h-5 w-5 text-gray-500" />
+              <span className="text-sm font-medium">Transcript</span>
+              <a
+                href={application.transcriptUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 text-sm hover:underline"
+              >
+                View
+              </a>
             </div>
-          ) : (
-            <p className="text-gray-500 text-sm">No documents uploaded</p>
-          )}
-        </div>
+          </div>
+        )}
 
         <div>
           <label

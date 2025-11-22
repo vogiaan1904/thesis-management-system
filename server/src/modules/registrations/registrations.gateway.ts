@@ -65,7 +65,8 @@ export class RegistrationsGateway {
     ) {
       this.server.to(`topic-${registration.topicId}`).emit('slots-update', {
         topicId: registration.topicId,
-        available: registration.topic.maxStudents - registration.topic.currentStudents,
+        available:
+          registration.topic.maxStudents - registration.topic.currentStudents,
         total: registration.topic.maxStudents,
       });
     }

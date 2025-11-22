@@ -20,6 +20,7 @@ dist-ssr
 # Uploads
 **/uploads/*
 !**/uploads/.gitkeep
+documents/
 
 # Editor directories and files
 .vscode/*

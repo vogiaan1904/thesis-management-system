@@ -3,7 +3,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export enum ReviewDecision {
   ACCEPT = 'ACCEPT',
-  DENY = 'DENY',
+  REJECT = 'REJECT',
 }
 
 export class ReviewApplicationDto {

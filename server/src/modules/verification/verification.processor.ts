@@ -13,10 +13,10 @@ interface VerificationJobData {
 
 interface EdusoftRecord {
   studentId: string;
-  studentName: string;
-  enrolledInThesis: boolean;
-  actualCredits: number;
-  englishPassed: boolean;
+  fullName: string;
+  dateOfBirth: string;
+  studentClass: string;
+  credits: number | null;
 }
 
 @Processor('verification')
@@ -44,20 +44,35 @@ export class VerificationProcessor {
         throw new Error('No worksheet found in Excel file');
       }
 
-      const edusoftData: EdusoftRecord[] = [];
+      // Build a Map for O(1) lookups: studentId -> EdusoftRecord
+      const edusoftMap = new Map<string, EdusoftRecord>();
       worksheet.eachRow((row, rowNumber) => {
         if (rowNumber === 1) return; // Skip header
 
-        edusoftData.push({
-          studentId: String(row.getCell(1).value || ''),
-          studentName: String(row.getCell(2).value || ''),
-          enrolledInThesis: row.getCell(3).value === 'Yes' || row.getCell(3).value === 'TRUE',
-          actualCredits: Number(row.getCell(4).value) || 0,
-          englishPassed: row.getCell(5).value === 'Yes' || row.getCell(5).value === 'TRUE',
-        });
+        // EDUSoft Excel format:
+        // Column 1: No. (row number - skip)
+        // Column 2: Student ID (match key)
+        // Column 3: Full name
+        // Column 4: Date of birth
+        // Column 5: Class
+        // Column 6: Credits (optional)
+        const studentId = String(row.getCell(2).value || '').trim();
+        if (studentId) {
+          const creditsValue = row.getCell(6).value;
+          edusoftMap.set(studentId, {
+            studentId,
+            fullName: String(row.getCell(3).value || ''),
+            dateOfBirth: String(row.getCell(4).value || ''),
+            studentClass: String(row.getCell(5).value || ''),
+            credits:
+              creditsValue !== null && creditsValue !== undefined
+                ? Number(creditsValue)
+                : null,
+          });
+        }
       });
 
-      this.logger.log(`Parsed ${edusoftData.length} records from Excel`);
+      this.logger.log(`Parsed ${edusoftMap.size} records from Excel`);
 
       // Step 2: Get all INSTRUCTOR_ACCEPTED registrations
       const registrations = await this.prisma.registration.findMany({
@@ -81,26 +96,29 @@ export class VerificationProcessor {
 
       // Step 3: Verify each registration
       for (const registration of registrations) {
-        const edusoftRecord = edusoftData.find(
-          (e) => e.studentId === registration.student.userId,
-        );
+        // O(1) lookup using Map
+        const edusoftRecord = edusoftMap.get(registration.student.userId);
 
         let newStatus: RegistrationStatus;
         let creditsVerified: number | null = null;
 
-        if (!edusoftRecord || !edusoftRecord.enrolledInThesis) {
+        if (!edusoftRecord) {
+          // Student not found in EDUSoft Excel → not enrolled in thesis course
           newStatus = RegistrationStatus.NOT_ENROLLED_EDUSOFT;
           results.notEnrolled++;
         } else if (
+          edusoftRecord.credits !== null &&
           registration.creditsClaimed &&
-          edusoftRecord.actualCredits < registration.creditsClaimed
+          edusoftRecord.credits < registration.creditsClaimed
         ) {
+          // Credits validation (only if credits column exists in Excel)
           newStatus = RegistrationStatus.INVALID_CREDITS;
-          creditsVerified = edusoftRecord.actualCredits;
+          creditsVerified = edusoftRecord.credits;
           results.invalidCredits++;
         } else {
+          // Student found and passes all checks
           newStatus = RegistrationStatus.VERIFIED;
-          creditsVerified = edusoftRecord.actualCredits;
+          creditsVerified = edusoftRecord.credits;
           results.verified++;
         }
 

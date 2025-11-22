@@ -107,29 +107,29 @@ export default function RevokeModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-500">Student</p>
-              <p className="font-medium">{application.studentName}</p>
-              <p className="text-sm text-gray-600">{application.studentId}</p>
+              <p className="font-medium">{application.student?.fullName}</p>
+              <p className="text-sm text-gray-600">{application.student?.userId}</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Topic</p>
-              <p className="font-medium">{application.topicTitle}</p>
+              <p className="font-medium">{application.topic?.titleVn}</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Instructor</p>
-              <p className="font-medium">{application.instructorName}</p>
+              <p className="font-medium">{application.topic?.instructor?.fullName}</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Current Status</p>
               <StatusBadge status={application.status} size="sm" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Self-Reported Credits</p>
-              <p className="font-medium">{application.selfReportedCredits}</p>
+              <p className="text-sm text-gray-500">Credits Claimed</p>
+              <p className="font-medium">{application.creditsClaimed}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Actual Credits</p>
+              <p className="text-sm text-gray-500">Verified Credits</p>
               <p className="font-medium">
-                {application.actualCredits || 'Not verified'}
+                {application.creditsVerified || 'Not verified'}
               </p>
             </div>
           </div>

@@ -208,7 +208,20 @@ export class ReportsService {
         });
       });
     } else if (type === 'registrations') {
+      // Only export registrations that have been processed by instructors
+      // Exclude PENDING_INSTRUCTOR_REVIEW and INSTRUCTOR_DENIED
       const registrations = await this.prisma.registration.findMany({
+        where: {
+          status: {
+            in: [
+              RegistrationStatus.INSTRUCTOR_ACCEPTED,
+              RegistrationStatus.VERIFIED,
+              RegistrationStatus.INVALID_CREDITS,
+              RegistrationStatus.NOT_ENROLLED_EDUSOFT,
+              RegistrationStatus.DEPARTMENT_REVOKED,
+            ],
+          },
+        },
         include: {
           student: {
             select: {

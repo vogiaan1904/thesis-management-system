@@ -5,7 +5,6 @@ import {
   GraduationCap,
   Mail,
   Building2,
-  BookOpen,
   Tag,
   Users,
   Calendar,
@@ -30,16 +29,23 @@ export default function TopicDetailModal({
 }: TopicDetailModalProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Active':
+      case 'ACTIVE':
         return 'bg-green-100 text-green-800';
-      case 'Full':
+      case 'FULL':
         return 'bg-red-100 text-red-800';
-      case 'Inactive':
+      case 'INACTIVE':
         return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  const formatDate = (date: string | Date) => {
+    return date instanceof Date ? date.toLocaleDateString() : new Date(date).toLocaleDateString();
+  };
+
+  const availableSlots = topic.maxStudents - topic.currentStudents;
+  const isAvailable = topic.status === 'ACTIVE' && availableSlots > 0;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Topic Details" size="4xl">
@@ -53,11 +59,14 @@ export default function TopicDetailModal({
             <span className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded">
               {topic.topicType}
             </span>
+            <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded">
+              {topic.semester}
+            </span>
             <span className={`px-3 py-1 text-sm rounded-full ${getStatusColor(topic.status)}`}>
               {topic.status}
             </span>
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-1">{topic.title}</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-1">{topic.titleVn}</h2>
           {topic.titleEn && (
             <p className="text-base text-gray-600 italic">{topic.titleEn}</p>
           )}
@@ -72,52 +81,43 @@ export default function TopicDetailModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <p className="text-sm text-gray-500">Name</p>
-              <p className="font-medium">
-                {topic.instructorTitle} {topic.instructorName}
-              </p>
+              <p className="font-medium">{topic.instructor.fullName}</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Employee ID</p>
-              <p className="font-medium">{topic.instructorEmployeeId}</p>
+              <p className="font-medium">{topic.instructor.userId}</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Department</p>
               <p className="font-medium flex items-center">
                 <Building2 className="h-4 w-4 mr-1 text-gray-400" />
-                {topic.instructorDepartment}
+                {topic.instructor.department || topic.department}
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Email</p>
               <a
-                href={`mailto:${topic.instructorEmail}`}
+                href={`mailto:${topic.instructor.email}`}
                 className="font-medium text-[#7C2946] hover:underline flex items-center"
               >
                 <Mail className="h-4 w-4 mr-1" />
-                {topic.instructorEmail}
+                {topic.instructor.email}
               </a>
             </div>
           </div>
         </div>
 
         {/* Topic Configuration */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-blue-50 p-4 rounded-lg">
             <div className="flex items-center space-x-2 mb-2">
               <Users className="h-5 w-5 text-blue-600" />
               <h4 className="font-medium text-blue-900">Slots</h4>
             </div>
             <p className="text-2xl font-bold text-blue-700">
-              {topic.availableSlots}/{topic.totalSlots}
+              {availableSlots}/{topic.maxStudents}
             </p>
             <p className="text-sm text-blue-600">Available</p>
-          </div>
-          <div className="bg-purple-50 p-4 rounded-lg">
-            <div className="flex items-center space-x-2 mb-2">
-              <BookOpen className="h-5 w-5 text-purple-600" />
-              <h4 className="font-medium text-purple-900">Research Area</h4>
-            </div>
-            <p className="text-lg font-semibold text-purple-700">{topic.researchArea}</p>
           </div>
           <div className="bg-green-50 p-4 rounded-lg">
             <div className="flex items-center space-x-2 mb-2">
@@ -129,19 +129,21 @@ export default function TopicDetailModal({
         </div>
 
         {/* Program Types */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-2">ELIGIBLE PROGRAMS</h3>
-          <div className="flex flex-wrap gap-2">
-            {topic.programTypes.map((type) => (
-              <span
-                key={type}
-                className="px-3 py-1.5 bg-[#7C2946]/10 text-[#7C2946] text-sm rounded font-medium border border-[#7C2946]/20"
-              >
-                {type}
-              </span>
-            ))}
+        {topic.programTypes && topic.programTypes.length > 0 && (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">ELIGIBLE PROGRAMS</h3>
+            <div className="flex flex-wrap gap-2">
+              {topic.programTypes.map((type) => (
+                <span
+                  key={type}
+                  className="px-3 py-1.5 bg-[#7C2946]/10 text-[#7C2946] text-sm rounded font-medium border border-[#7C2946]/20"
+                >
+                  {type}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Description */}
         <div>
@@ -155,69 +157,83 @@ export default function TopicDetailModal({
         </div>
 
         {/* Requirements */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
-            <h3 className="text-sm font-semibold text-orange-800 mb-2 flex items-center">
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              PHASE 1 REQUIREMENTS
-            </h3>
-            <p className="text-sm text-orange-900 leading-relaxed">
-              {topic.phase1Requirements}
-            </p>
+        {(topic.phase1Requirements || topic.phase2Requirements) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {topic.phase1Requirements && (
+              <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
+                <h3 className="text-sm font-semibold text-orange-800 mb-2 flex items-center">
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  PHASE 1 REQUIREMENTS
+                </h3>
+                <p className="text-sm text-orange-900 leading-relaxed whitespace-pre-line">
+                  {topic.phase1Requirements}
+                </p>
+              </div>
+            )}
+            {topic.phase2Requirements && (
+              <div className="bg-teal-50 p-4 rounded-lg border border-teal-100">
+                <h3 className="text-sm font-semibold text-teal-800 mb-2 flex items-center">
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  PHASE 2 REQUIREMENTS
+                </h3>
+                <p className="text-sm text-teal-900 leading-relaxed whitespace-pre-line">
+                  {topic.phase2Requirements}
+                </p>
+              </div>
+            )}
           </div>
-          <div className="bg-teal-50 p-4 rounded-lg border border-teal-100">
-            <h3 className="text-sm font-semibold text-teal-800 mb-2 flex items-center">
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              PHASE 2 REQUIREMENTS
-            </h3>
-            <p className="text-sm text-teal-900 leading-relaxed">
-              {topic.phase2Requirements}
-            </p>
-          </div>
-        </div>
+        )}
 
-        {/* Required Skills */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-2">REQUIRED SKILLS / PREREQUISITES</h3>
-          <div className="flex flex-wrap gap-2">
-            {topic.requiredSkills.map((skill) => (
-              <span
-                key={skill}
-                className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded border border-gray-200"
-              >
-                {skill}
-              </span>
-            ))}
+        {/* Prerequisites */}
+        {topic.prerequisites && (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">PREREQUISITES</h3>
+            <div className="bg-gray-50 p-4 rounded border border-gray-200">
+              <p className="text-sm text-gray-700 whitespace-pre-line">{topic.prerequisites}</p>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* References */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
-            <BookMarked className="h-4 w-4 mr-2" />
-            REFERENCES
-          </h3>
-          <div className="space-y-2">
-            {topic.references.map((ref, index) => (
-              <div
-                key={index}
-                className="bg-gray-50 p-3 rounded border-l-4 border-[#7C2946] text-sm text-gray-700"
-              >
-                {ref}
-              </div>
-            ))}
+        {topic.references && topic.references.length > 0 && (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+              <BookMarked className="h-4 w-4 mr-2" />
+              REFERENCES
+            </h3>
+            <div className="space-y-2">
+              {topic.references.map((ref, index) => (
+                <div
+                  key={index}
+                  className="bg-gray-50 p-3 rounded border-l-4 border-[#7C2946] text-sm text-gray-700"
+                >
+                  {ref.url ? (
+                    <a
+                      href={ref.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {ref.text}
+                    </a>
+                  ) : (
+                    ref.text
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Timestamps */}
         <div className="flex items-center justify-between text-xs text-gray-500 border-t pt-3">
           <div className="flex items-center space-x-1">
             <Calendar className="h-3 w-3" />
-            <span>Created: {topic.createdAt.toLocaleDateString()}</span>
+            <span>Created: {formatDate(topic.createdAt)}</span>
           </div>
           <div className="flex items-center space-x-1">
             <Clock className="h-3 w-3" />
-            <span>Updated: {topic.updatedAt.toLocaleDateString()}</span>
+            <span>Updated: {formatDate(topic.updatedAt)}</span>
           </div>
         </div>
 
@@ -226,12 +242,8 @@ export default function TopicDetailModal({
           <Button variant="outline" onClick={onClose} className="flex-1">
             Close
           </Button>
-          <Button
-            onClick={onApply}
-            disabled={topic.availableSlots === 0}
-            className="flex-1"
-          >
-            {topic.availableSlots > 0 ? 'Apply for this Topic' : 'Topic Full'}
+          <Button onClick={onApply} disabled={!isAvailable} className="flex-1">
+            {isAvailable ? 'Apply for this Topic' : 'Topic Full'}
           </Button>
         </div>
       </div>
