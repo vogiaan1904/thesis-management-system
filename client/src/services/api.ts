@@ -285,6 +285,11 @@ export const applicationService = {
   async withdraw(id: string): Promise<void> {
     await apiClient.delete(`/registrations/${id}`);
   },
+
+  async delete(id: string): Promise<void> {
+    await apiClient.delete(`/registrations/${id}`);
+    toast.success('Registration deleted successfully');
+  },
 };
 
 // Verification APIs

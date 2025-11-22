@@ -69,3 +69,35 @@ The ThesisTopic model has been enhanced with comprehensive fields:
 - Theme color (#7C2946) applied to buttons, badges, and UI elements
 - Support for Vietnamese and English titles
 
+
+# Admin Dashboard (Registration Management)
+
+The AdminDashboard has been redesigned from a dashboard view to a focused registration management interface.
+
+## Features
+- **Search**: Full-text search across student name, ID, email, topic title, and instructor name
+- **Status Filter**: Dropdown to filter by registration status (Accepted, Verified, Invalid Credits, Not Enrolled, Revoked)
+- **Stats Bar**: Quick summary showing total, accepted, verified, and invalid counts
+- **Data Table**: Comprehensive table with all registration details
+
+## Row Actions (Dropdown Menu)
+Each registration row has a 3-dot menu with the following actions:
+- **View Details**: Opens a modal with complete registration information
+- **Send Email**: Opens email client to contact the student
+- **Revoke**: Available for accepted/verified registrations - opens revoke modal with reason input
+- **Delete**: Permanently removes the registration (with confirmation)
+
+## Header Actions
+- **Export**: Download registrations as Excel file
+- **Upload EDUSoft**: Upload EDUSoft data for batch verification
+- **Refresh**: Reload registration data
+
+## Detail Modal
+Shows comprehensive registration information:
+- Student details (name, ID, email)
+- Topic and instructor information
+- Credits (claimed vs verified)
+- Motivation letter
+- Instructor and department comments
+- Timestamps (created/updated)
+

@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { LogOut, User, BookOpen } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -42,19 +42,28 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-white shadow-md">
+    <nav className="bg-white shadow-md border-b border-gray-200">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
-          <Link to={getHomeLink()} className="flex items-center space-x-2">
-            <BookOpen className="h-8 w-8 text-blue-600" />
-            <span className="text-xl font-bold text-gray-900">
-              Thesis Management
-            </span>
+          <Link to={getHomeLink()} className="flex items-center space-x-3">
+            <img
+              src="/logo-vector-IU-01.png"
+              alt="IU Logo"
+              className="h-10 w-auto"
+            />
+            <div className="flex flex-col">
+              <span className="text-lg font-bold text-[#7C2946]">
+                Thesis Management
+              </span>
+              <span className="text-xs text-gray-500">
+                International University
+              </span>
+            </div>
           </Link>
 
           {user && (
             <div className="flex items-center space-x-4">
-              <span className="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+              <span className="text-sm font-medium text-[#7C2946] bg-[#7C2946]/10 px-3 py-1 rounded-full">
                 {getRoleLabel()}
               </span>
               <div className="flex items-center space-x-2">
@@ -74,7 +83,7 @@ export default function Navbar() {
           {!user && (
             <Link
               to="/login"
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+              className="bg-[#7C2946] text-white px-4 py-2 rounded-md hover:bg-[#5a1f33] transition-colors"
             >
               Login
             </Link>
