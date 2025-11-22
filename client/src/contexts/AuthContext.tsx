@@ -80,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (userId: string, password: string): Promise<boolean> => {
     try {
+      console.log('AuthContext.login called');
       const data = await authService.login(userId, password);
       // Normalize role to lowercase for consistent client-side checks
       const normalizedUser: User = {
@@ -89,7 +90,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(normalizedUser);
       return true;
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error('Login failed with error:', error);
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
       return false;
     }
   };

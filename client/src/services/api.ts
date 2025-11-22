@@ -98,8 +98,17 @@ apiClient.interceptors.response.use(
 // Auth APIs
 export const authService = {
   async login(userId: string, password: string): Promise<AuthResponse> {
+    console.log('authService.login called with userId:', userId);
     const response = await apiClient.post<AuthResponse>('/auth/login', { userId, password });
+    console.log('API response:', response);
+    console.log('Response data:', response.data);
+    console.log('Response status:', response.status);
+
     const data = response.data;
+
+    // Check if response.data has access_token or if it's nested
+    console.log('Checking for access_token:', data.access_token);
+    console.log('Full data object:', JSON.stringify(data, null, 2));
 
     if (data.access_token) {
       // Normalize role to lowercase before storing
@@ -111,6 +120,10 @@ export const authService = {
       localStorage.setItem('user', JSON.stringify(normalizedUser));
       // Return normalized data
       data.user = normalizedUser;
+      localStorage.setItem('user', JSON.stringify(data.user));
+      console.log('Stored token and user in localStorage');
+    } else {
+      console.error('No access_token in response data');
     }
 
     return data;

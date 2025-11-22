@@ -35,7 +35,6 @@ function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
     return <Navigate to="/login" replace />;
   }
 
-  // Check if user has the required role
   if (!allowedRoles.includes(user.role)) {
     return <Navigate to="/login" replace />;
   }
@@ -103,9 +102,9 @@ function AppRoutes() {
           user ? (
             <Navigate
               to={
-                user.role === 'student'
+                user.role.toLowerCase() === 'student'
                   ? '/student'
-                  : user.role === 'instructor'
+                  : user.role.toLowerCase() === 'instructor'
                   ? '/instructor'
                   : '/admin'
               }
