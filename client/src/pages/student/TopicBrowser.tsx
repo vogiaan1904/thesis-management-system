@@ -38,7 +38,7 @@ export default function TopicBrowser() {
     try {
       setLoading(true);
       setError(null);
-      const response = await topicService.getAll({ status: 'ACTIVE' });
+      const response = await topicService.getAll();
       setTopics(response.data);
       setFilteredTopics(response.data);
     } catch (err) {
@@ -85,24 +85,18 @@ export default function TopicBrowser() {
     setIsDetailModalOpen(true);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return 'bg-green-100 text-green-800';
-      case 'FULL':
-        return 'bg-red-100 text-red-800';
-      case 'INACTIVE':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  const getStatusColor = (topic: ThesisTopic) => {
+    if (topic.status === 'FULL' || topic.currentStudents >= topic.maxStudents) {
+      return 'bg-red-100 text-red-800';
     }
+    if (topic.status === 'ACTIVE') {
+      return 'bg-green-100 text-green-800';
+    }
+    return 'bg-gray-100 text-gray-800';
   };
 
   const getStatusLabel = (topic: ThesisTopic) => {
-    if (topic.status === 'FULL' || topic.currentStudents >= topic.maxStudents) {
-      return 'FULL';
-    }
-    const available = topic.maxStudents - topic.currentStudents;
+    const available = Math.max(0, topic.maxStudents - topic.currentStudents);
     return `${available}/${topic.maxStudents} slots`;
   };
 
@@ -130,7 +124,7 @@ export default function TopicBrowser() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">Available Thesis Topics</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Thesis Topics</h1>
       </div>
 
       {/* Search and Filters */}
@@ -194,7 +188,7 @@ export default function TopicBrowser() {
           <div className="text-sm text-gray-600 mb-2">
             Showing {filteredTopics.length} of {topics.length} topics
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-4">
             {filteredTopics.map((topic) => (
               <Card key={topic.id} className="hover:shadow-lg transition-shadow">
                 <CardBody>
@@ -214,7 +208,7 @@ export default function TopicBrowser() {
                           </span>
                         </div>
                         <span
-                          className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ${getStatusColor(topic.status)}`}
+                          className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ${getStatusColor(topic)}`}
                         >
                           {getStatusLabel(topic)}
                         </span>
