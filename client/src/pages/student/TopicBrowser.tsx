@@ -11,11 +11,10 @@ import {
   Filter,
   Mail,
   BookOpen,
-  Tag,
-  Building2,
   GraduationCap,
   Eye,
   AlertCircle,
+  Users,
 } from 'lucide-react';
 
 export default function TopicBrowser() {
@@ -85,21 +84,6 @@ export default function TopicBrowser() {
     setIsDetailModalOpen(true);
   };
 
-  const getStatusColor = (topic: ThesisTopic) => {
-    if (topic.status === 'FULL' || topic.currentStudents >= topic.maxStudents) {
-      return 'bg-red-100 text-red-800';
-    }
-    if (topic.status === 'ACTIVE') {
-      return 'bg-green-100 text-green-800';
-    }
-    return 'bg-gray-100 text-gray-800';
-  };
-
-  const getStatusLabel = (topic: ThesisTopic) => {
-    const available = Math.max(0, topic.maxStudents - topic.currentStudents);
-    return `${available}/${topic.maxStudents} slots`;
-  };
-
   const canApply = (topic: ThesisTopic) => {
     return topic.status === 'ACTIVE' && topic.currentStudents < topic.maxStudents;
   };
@@ -138,7 +122,7 @@ export default function TopicBrowser() {
                 placeholder="Search by title, instructor, code..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#7C2946] focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none"
               />
             </div>
             <div className="flex items-center space-x-2">
@@ -146,7 +130,7 @@ export default function TopicBrowser() {
               <select
                 value={selectedDepartment}
                 onChange={(e) => setSelectedDepartment(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-[#7C2946] focus:border-transparent"
+                className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none"
               >
                 <option value="">All Departments</option>
                 {departments.map((dept) => (
@@ -188,120 +172,99 @@ export default function TopicBrowser() {
           <div className="text-sm text-gray-600 mb-2">
             Showing {filteredTopics.length} of {topics.length} topics
           </div>
-          <div className="space-y-4">
-            {filteredTopics.map((topic) => (
-              <Card key={topic.id} className="hover:shadow-lg transition-shadow">
-                <CardBody>
-                  <div className="space-y-4">
-                    {/* Header */}
-                    <div>
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center space-x-2 flex-wrap">
-                          <span className="px-2 py-1 bg-[#7C2946] text-white text-xs font-mono rounded">
-                            {topic.topicCode}
-                          </span>
-                          <span className="px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded">
-                            {topic.topicType}
-                          </span>
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
-                            {topic.semester}
-                          </span>
-                        </div>
-                        <span
-                          className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ${getStatusColor(topic)}`}
-                        >
-                          {getStatusLabel(topic)}
-                        </span>
-                      </div>
 
-                      {/* Title */}
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+          {/* Header Row */}
+          <div className="flex items-center gap-4 px-4 py-2 bg-gray-50 rounded-lg text-xs font-medium text-gray-500 uppercase tracking-wide">
+            <div className="flex-shrink-0 w-28 text-center">Code</div>
+            <div className="flex-shrink-0 w-32 text-center">Type</div>
+            <div className="flex-1 min-w-0">Title</div>
+            <div className="flex-shrink-0 w-48">Instructor</div>
+            <div className="flex-shrink-0 w-32 text-center">Department</div>
+            <div className="flex-shrink-0 w-20 text-center">Slots</div>
+            <div className="flex-shrink-0 w-24 text-center"></div>
+          </div>
+
+          <div className="space-y-3">
+            {filteredTopics.map((topic) => (
+              <Card key={topic.id} className="hover:shadow-md transition-shadow">
+                <CardBody className="py-3">
+                  <div className="flex items-center gap-4">
+                    {/* Left: Topic Code */}
+                    <div className="flex-shrink-0 w-28 text-center">
+                      <span className="px-2 py-1 bg-[#7C2946] text-white text-xs font-mono rounded block">
+                        {topic.topicCode}
+                      </span>
+                    </div>
+
+                    {/* Type & Semester */}
+                    <div className="flex-shrink-0 w-32 text-center text-xs text-gray-600">
+                      <div>{topic.topicType}</div>
+                      <div className="text-gray-400">{topic.semester}</div>
+                    </div>
+
+                    {/* Title */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-gray-900 line-clamp-2">
                         {topic.titleVn}
                       </h3>
                       {topic.titleEn && (
-                        <p className="text-sm text-gray-600 italic">{topic.titleEn}</p>
+                        <p className="text-xs text-gray-500 italic line-clamp-1">{topic.titleEn}</p>
                       )}
                     </div>
 
-                    {/* Instructor Info */}
-                    <div className="flex items-start space-x-2 text-sm">
-                      <GraduationCap className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">
+                    {/* Instructor */}
+                    <div className="flex-shrink-0 w-48">
+                      <div className="flex items-center space-x-1">
+                        <GraduationCap className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-sm font-medium text-gray-900 truncate">
                           {topic.instructor?.fullName || 'N/A'}
-                        </p>
-                        {topic.instructor?.email && (
-                          <a
-                            href={`mailto:${topic.instructor.email}`}
-                            className="text-blue-600 hover:underline flex items-center space-x-1"
-                          >
-                            <Mail className="h-3 w-3" />
-                            <span>{topic.instructor.email}</span>
-                          </a>
-                        )}
+                        </span>
                       </div>
+                      {topic.instructor?.email && (
+                        <a
+                          href={`mailto:${topic.instructor.email}`}
+                          className="text-xs text-blue-600 hover:underline flex items-center space-x-1 ml-5"
+                        >
+                          <Mail className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{topic.instructor.email}</span>
+                        </a>
+                      )}
                     </div>
 
                     {/* Department */}
-                    <div className="flex items-center space-x-2 text-sm text-gray-700">
-                      <Building2 className="h-4 w-4 text-gray-500" />
-                      <span>{topic.department}</span>
+                    <div className="flex-shrink-0 w-32 text-center">
+                      <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded border inline-block truncate max-w-full">
+                        {topic.department}
+                      </span>
                     </div>
 
-                    {/* Program Types */}
-                    {topic.programTypes && topic.programTypes.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {topic.programTypes.slice(0, 4).map((program) => (
-                          <span
-                            key={program}
-                            className="px-2 py-1 bg-[#7C2946] bg-opacity-10 text-[#7C2946] text-xs rounded"
-                          >
-                            {program}
-                          </span>
-                        ))}
-                        {topic.programTypes.length > 4 && (
-                          <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                            +{topic.programTypes.length - 4} more
-                          </span>
-                        )}
+                    {/* Slots */}
+                    <div className="flex-shrink-0 w-20 text-center">
+                      <div className="flex items-center justify-center space-x-1">
+                        <Users className="h-4 w-4 text-gray-400" />
+                        <span className={`text-sm font-medium ${
+                          topic.currentStudents >= topic.maxStudents ? 'text-red-600' : 'text-gray-700'
+                        }`}>
+                          {Math.max(0, topic.maxStudents - topic.currentStudents)}/{topic.maxStudents}
+                        </span>
                       </div>
-                    )}
-
-                    {/* Description Preview */}
-                    <p className="text-sm text-gray-600 line-clamp-2">{topic.description}</p>
-
-                    {/* Prerequisites */}
-                    {topic.prerequisites && (
-                      <div className="text-sm">
-                        <span className="font-medium text-gray-700">Prerequisites: </span>
-                        <span className="text-gray-600">{topic.prerequisites}</span>
-                      </div>
-                    )}
-
-                    {/* Pending Applications */}
-                    {topic._count && topic._count.registrations > 0 && (
-                      <div className="flex items-center space-x-2 text-sm text-orange-700 bg-orange-50 px-3 py-2 rounded">
-                        <Tag className="h-4 w-4" />
-                        <span>{topic._count.registrations} pending applications</span>
-                      </div>
-                    )}
+                    </div>
 
                     {/* Actions */}
-                    <div className="flex space-x-2 pt-2">
-                      <Button
+                    <div className="flex-shrink-0 w-24 flex items-center justify-center space-x-2">
+                      <button
                         onClick={() => handleViewDetails(topic)}
-                        variant="secondary"
-                        className="flex-1 flex items-center justify-center space-x-1"
+                        className="p-2 text-gray-500 hover:text-[#7C2946] hover:bg-gray-100 rounded-full transition-colors"
+                        title="View Details"
                       >
-                        <Eye className="h-4 w-4" />
-                        <span>View Details</span>
-                      </Button>
+                        <Eye className="h-5 w-5" />
+                      </button>
                       <Button
                         onClick={() => handleApply(topic)}
-                        className="flex-1"
+                        size="sm"
                         disabled={!canApply(topic)}
                       >
-                        {canApply(topic) ? 'Apply' : 'Full'}
+                        Apply
                       </Button>
                     </div>
                   </div>

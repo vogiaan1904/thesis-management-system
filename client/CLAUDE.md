@@ -3,6 +3,8 @@
 
 # Theme
 - The theme color should be plum red #7C2946 (all the buttons, ... will be this color, maybe the status of the application can be red, blue, green, yellow,...). and the main background is still white
+- Remove the blue/default focus border for input fields and buttons when clicked - use `focus:outline-none` to remove the default browser focus ring
+- Secondary colors should be red-based: use `bg-[#7C2946]/5` or `bg-[#7C2946]/10` for light backgrounds, `text-[#7C2946]` for text, and `border-[#7C2946]/10` for borders. Avoid blue, green, orange, teal for decorative elements - keep them red/plum themed
 
 
 # Recent Fixes (2024)

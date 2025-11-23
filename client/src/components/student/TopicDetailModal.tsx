@@ -56,10 +56,10 @@ export default function TopicDetailModal({
             <span className="px-3 py-1 bg-[#7C2946] text-white text-sm font-mono rounded">
               {topic.topicCode}
             </span>
-            <span className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded">
+            <span className="px-3 py-1 bg-[#7C2946]/10 text-[#7C2946] text-sm rounded">
               {topic.topicType}
             </span>
-            <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded">
+            <span className="px-3 py-1 bg-[#7C2946]/10 text-[#7C2946] text-sm rounded">
               {topic.semester}
             </span>
             <span className={`px-3 py-1 text-sm rounded-full ${getStatusColor(topic.status)}`}>
@@ -109,22 +109,22 @@ export default function TopicDetailModal({
 
         {/* Topic Configuration */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-blue-50 p-4 rounded-lg">
+          <div className="bg-[#7C2946]/5 p-4 rounded-lg">
             <div className="flex items-center space-x-2 mb-2">
-              <Users className="h-5 w-5 text-blue-600" />
-              <h4 className="font-medium text-blue-900">Slots</h4>
+              <Users className="h-5 w-5 text-[#7C2946]" />
+              <h4 className="font-medium text-[#7C2946]">Slots</h4>
             </div>
-            <p className="text-2xl font-bold text-blue-700">
+            <p className="text-2xl font-bold text-[#7C2946]">
               {availableSlots}/{topic.maxStudents}
             </p>
-            <p className="text-sm text-blue-600">Available</p>
+            <p className="text-sm text-[#7C2946]/70">Available</p>
           </div>
-          <div className="bg-green-50 p-4 rounded-lg">
+          <div className="bg-[#7C2946]/5 p-4 rounded-lg">
             <div className="flex items-center space-x-2 mb-2">
-              <Tag className="h-5 w-5 text-green-600" />
-              <h4 className="font-medium text-green-900">Department</h4>
+              <Tag className="h-5 w-5 text-[#7C2946]" />
+              <h4 className="font-medium text-[#7C2946]">Department</h4>
             </div>
-            <p className="text-lg font-semibold text-green-700">{topic.department}</p>
+            <p className="text-lg font-semibold text-[#7C2946]">{topic.department}</p>
           </div>
         </div>
 
@@ -160,23 +160,23 @@ export default function TopicDetailModal({
         {(topic.phase1Requirements || topic.phase2Requirements) && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {topic.phase1Requirements && (
-              <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
-                <h3 className="text-sm font-semibold text-orange-800 mb-2 flex items-center">
+              <div className="bg-[#7C2946]/5 p-4 rounded-lg border border-[#7C2946]/10">
+                <h3 className="text-sm font-semibold text-[#7C2946] mb-2 flex items-center">
                   <CheckCircle2 className="h-4 w-4 mr-2" />
                   PHASE 1 REQUIREMENTS
                 </h3>
-                <p className="text-sm text-orange-900 leading-relaxed whitespace-pre-line">
+                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
                   {topic.phase1Requirements}
                 </p>
               </div>
             )}
             {topic.phase2Requirements && (
-              <div className="bg-teal-50 p-4 rounded-lg border border-teal-100">
-                <h3 className="text-sm font-semibold text-teal-800 mb-2 flex items-center">
+              <div className="bg-[#7C2946]/5 p-4 rounded-lg border border-[#7C2946]/10">
+                <h3 className="text-sm font-semibold text-[#7C2946] mb-2 flex items-center">
                   <CheckCircle2 className="h-4 w-4 mr-2" />
                   PHASE 2 REQUIREMENTS
                 </h3>
-                <p className="text-sm text-teal-900 leading-relaxed whitespace-pre-line">
+                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
                   {topic.phase2Requirements}
                 </p>
               </div>
@@ -212,7 +212,7 @@ export default function TopicDetailModal({
                       href={ref.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
+                      className="text-[#7C2946] hover:underline"
                     >
                       {ref.text}
                     </a>
